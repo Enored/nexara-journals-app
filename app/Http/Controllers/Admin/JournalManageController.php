@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Journal;
+use App\Support\JournalLimit;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class JournalManageController extends Controller
+{
+    public function index(): View
+    {
+        $journals = Journal::query()->orderBy('name')->paginate(20);
+
+        return view('admin.journals.index', [
+            'journals' => $journals,
+            'journalCount' => JournalLimit::count(),
+            'journalMax' => JournalLimit::max(),
+            'canCreateMoreJournals' => JournalLimit::canCreate(),
+        ]);
+    }
+
+    public function create(): View|RedirectResponse
+    {
+        if (! JournalLimit::canCreate()) {
+            return redirect()
+                ->route('admin.journals.index')
+                ->with('error', JournalLimit::reachedMessage());
+        }
+
+        return view('admin.journals.create', [
+            'journalCount' => JournalLimit::count(),
+            'journalMax' => JournalLimit::max(),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        if (! JournalLimit::canCreate()) {
+            return redirect()
+                ->route('admin.journals.index')
+                ->with('error', JournalLimit::reachedMessage());
+        }
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'subdomain' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9-]+$/', 'unique:journals,subdomain'],
+            'issn' => ['nullable', 'string', 'max:20'],
+            'description' => ['nullable', 'string'],
+            'primary_color' => ['nullable', 'string', 'max:7'],
+            'submission_guidelines' => ['nullable', 'string'],
+        ]);
+
+        Journal::query()->create($data + ['is_active' => true]);
+
+        return redirect()->route('admin.journals.index')->with('status', 'Journal created.');
+    }
+
+    public function edit(Journal $journal): View
+    {
+        return view('admin.journals.edit', compact('journal'));
+    }
+
+    public function update(Request $request, Journal $journal): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'subdomain' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9-]+$/', 'unique:journals,subdomain,'.$journal->id],
+            'issn' => ['nullable', 'string', 'max:20'],
+            'description' => ['nullable', 'string'],
+            'primary_color' => ['nullable', 'string', 'max:7'],
+            'submission_guidelines' => ['nullable', 'string'],
+        ]);
+
+        $journal->update(array_merge($data, [
+            'is_active' => $request->boolean('is_active'),
+        ]));
+
+        return redirect()->route('admin.journals.index')->with('status', 'Journal updated.');
+    }
+}

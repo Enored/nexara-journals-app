@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Http\Controllers\Dashboard;
+
+use App\Enums\SubmissionStatus;
+use App\Http\Controllers\Controller;
+use App\Models\Journal;
+use App\Models\Submission;
+use App\Support\AuthorSubmissionIndexFilters;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class AuthorSubmissionController extends Controller
+{
+    public function __invoke(Request $request): View
+    {
+        $user = auth()->user();
+
+        $base = Submission::query()->where('author_id', $user->id);
+
+        $authorJournalIds = (clone $base)->distinct()->pluck('journal_id');
+        $authorJournals = Journal::query()
+            ->whereIn('id', $authorJournalIds)
+            ->orderBy('name')
+            ->get();
+
+        $filters = AuthorSubmissionIndexFilters::fromRequest($request, $authorJournals);
+        $submissions = AuthorSubmissionIndexFilters::paginate($filters, $user->id);
+
+        $stats = [
+            'total' => (clone $base)->count(),
+            'active' => (clone $base)->whereIn('status', [
+                SubmissionStatus::Submitted,
+                SubmissionStatus::UnderReview,
+                SubmissionStatus::RevisionRequested,
+            ])->count(),
+            'published' => (clone $base)->where('status', SubmissionStatus::Published)->count(),
+            'revision' => (clone $base)->where('status', SubmissionStatus::RevisionRequested)->count(),
+        ];
+
+        return view('dashboard.author.submissions', [
+            'user' => $user,
+            'submissions' => $submissions,
+            'stats' => $stats,
+            'authorJournals' => $authorJournals,
+            'statuses' => SubmissionStatus::cases(),
+            'filters' => $filters,
+            'activeFilterPills' => AuthorSubmissionIndexFilters::activeFilterPills($filters, $authorJournals),
+            'hasActiveFilters' => AuthorSubmissionIndexFilters::hasActiveFilters($filters),
+        ]);
+    }
+}
