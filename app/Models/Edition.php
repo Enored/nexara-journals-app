@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\EditionStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,14 +18,51 @@ class Edition extends Model
         'volume',
         'issue',
         'title',
+        'status',
         'published_at',
     ];
 
     protected function casts(): array
     {
         return [
+            'status' => EditionStatus::class,
             'published_at' => 'date',
         ];
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->status === EditionStatus::Published;
+    }
+
+    public function isDraft(): bool
+    {
+        return $this->status === EditionStatus::Draft;
+    }
+
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('status', EditionStatus::Published);
+    }
+
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeDraft(Builder $query): Builder
+    {
+        return $query->where('status', EditionStatus::Draft);
+    }
+
+    public function label(): string
+    {
+        $base = 'Vol. '.$this->volume.', No. '.$this->issue;
+
+        return $this->title ? $base.' — '.$this->title : $base;
     }
 
     public function journal(): BelongsTo

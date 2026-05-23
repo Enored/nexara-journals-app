@@ -7,9 +7,15 @@
         <h1 class="text-xl font-semibold text-slate-900">Create account</h1>
         <form method="POST" action="{{ platform_route('register') }}" class="mt-6 space-y-4">
             @csrf
-            <div>
-                <label class="block text-sm font-medium text-slate-700">Name</label>
-                <input name="name" value="{{ old('name') }}" required class="mt-1 w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-journal-primary focus:ring-journal-primary">
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">First name</label>
+                    <input name="first_name" value="{{ old('first_name') }}" required autocomplete="given-name" class="mt-1 w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-journal-primary focus:ring-journal-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700">Last name</label>
+                    <input name="last_name" value="{{ old('last_name') }}" required autocomplete="family-name" class="mt-1 w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-journal-primary focus:ring-journal-primary">
+                </div>
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700">Email</label>

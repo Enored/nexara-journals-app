@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Concerns;
 
+use App\Enums\EditionStatus;
 use App\Enums\JournalRole;
 use App\Models\Submission;
 use App\Models\User;
@@ -22,6 +23,7 @@ trait LoadsSubmissionWorkspace
             'reviewAssignments' => fn ($q) => $q->orderByDesc('invited_at'),
             'reviewAssignments.reviewer',
             'reviewAssignments.editor',
+            'reviewAssignments.review',
             'reviews.reviewer',
         ]);
 
@@ -40,6 +42,7 @@ trait LoadsSubmissionWorkspace
 
             if (auth()->user()?->can('publish', $submission)) {
                 $editionsForPublish = $submission->journal->editions()
+                    ->where('status', EditionStatus::Draft)
                     ->orderByDesc('volume')
                     ->orderByDesc('issue')
                     ->get();

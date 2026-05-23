@@ -1,7 +1,3 @@
-@php
-    use App\Enums\JournalRole;
-@endphp
-
 <form
     method="POST"
     action="{{ platform_route('admin.users.update-roles', $user) }}"
@@ -15,6 +11,10 @@
         <input type="hidden" name="return[{{ $key }}]" value="{{ $value }}">
     @endforeach
 
+    <p class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        Every account can submit manuscripts as an <strong>author</strong>. Assign <strong>reviewer</strong>, <strong>editor</strong>, or <strong>journal admin</strong> per journal below.
+    </p>
+
     @forelse ($journals as $journal)
         @php
             $row = $existing->get($journal->id, collect());
@@ -25,7 +25,7 @@
                 <span class="font-normal text-slate-500">({{ $journal->subdomain }})</span>
             </legend>
             <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-                @foreach (JournalRole::cases() as $role)
+                @foreach ($roles as $role)
                     @php
                         $checked = $row->contains(fn ($jur) => $jur->role === $role);
                     @endphp
@@ -37,7 +37,7 @@
                             @checked(old("roles.{$journal->id}.{$role->value}", $checked))
                             class="dash-checkbox"
                         >
-                        {{ str_replace('_', ' ', ucfirst($role->value)) }}
+                        {{ $role->label() }}
                     </label>
                 @endforeach
             </div>

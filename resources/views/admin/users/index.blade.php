@@ -7,7 +7,7 @@
 
 @section('title', 'Users')
 @section('pageTitle', 'Users')
-@section('pageDescription', 'Search users and assign per-journal roles.')
+@section('pageDescription', 'Search users and assign reviewer, editor, or journal admin roles. Every user can submit as an author without assignment.')
 
 @section('content')
     <form method="GET" action="{{ platform_route('admin.users.index') }}" class="dash-card w-full p-4">
@@ -37,7 +37,7 @@
                 <select id="users-filter-role" name="role" class="dash-select">
                     <option value="">All roles</option>
                     @foreach ($roles as $role)
-                        <option value="{{ $role->value }}" @selected($filters['role'] === $role)>{{ str_replace('_', ' ', ucfirst($role->value)) }}</option>
+                        <option value="{{ $role->value }}" @selected($filters['role'] === $role)>{{ $role->label() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -77,12 +77,12 @@
                     <td class="text-slate-600">{{ $user->email }}</td>
                     <td>
                         <div class="flex flex-wrap gap-1">
-                            @forelse ($user->journalUserRoles as $jur)
+                            @forelse ($user->staffJournalRoles as $jur)
                                 <x-dash.badge title="{{ $jur->journal->name }}">
-                                    {{ $jur->journal->subdomain }} · {{ str_replace('_', ' ', $jur->role->value) }}
+                                    {{ $jur->journal->subdomain }} · {{ $jur->role->label() }}
                                 </x-dash.badge>
                             @empty
-                                <span class="text-slate-400">—</span>
+                                <span class="text-slate-400" title="No staff roles; user can still submit manuscripts as an author">—</span>
                             @endforelse
                         </div>
                     </td>
@@ -126,7 +126,7 @@
         <div class="dash-modal-panel sm:max-w-xl">
             <div class="dash-modal-header">
                 <div class="min-w-0">
-                    <h2 id="user-roles-modal-title" class="text-base font-semibold text-slate-900">Edit journal roles</h2>
+                    <h2 id="user-roles-modal-title" class="text-base font-semibold text-slate-900">Edit staff roles</h2>
                     <p id="user-roles-modal-subtitle" class="mt-0.5 truncate text-sm text-slate-500"></p>
                 </div>
                 <button

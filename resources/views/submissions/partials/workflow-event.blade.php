@@ -28,27 +28,23 @@
                 <p class="mt-1 text-slate-600">{{ $meta['reason'] }}</p>
             @endif
 
-            @if ($event['kind'] === 'review_submitted')
+            @if ($event['kind'] === 'review_submitted' && ! $forAuthor)
                 @if (! empty($meta['recommendation']))
                     <p class="mt-1 text-slate-600">
                         Recommendation: <strong>{{ $meta['recommendation'] }}</strong>
-                        @if (! $forAuthor && ! empty($meta['scores']))
+                        @if (! empty($meta['scores']))
                             · Scores O/M/C: {{ $meta['scores'] }}
                         @endif
                     </p>
                 @endif
-                @if (! $forAuthor && ! empty($meta['comments_for_editor']))
-                    <p class="mt-2 text-xs font-semibold uppercase text-slate-500">Comments for editor</p>
+                @if (! empty($meta['comments_for_editor']))
+                    <p class="mt-2 text-xs font-semibold uppercase text-slate-500">Confidential comments</p>
                     <p class="mt-1 whitespace-pre-wrap text-slate-800">{{ $meta['comments_for_editor'] }}</p>
-                @endif
-                @if (! empty($meta['comments_for_author']))
-                    <p class="mt-2 text-xs font-semibold uppercase text-slate-500">{{ $forAuthor ? 'Comments' : 'Comments for author' }}</p>
-                    <p class="mt-1 whitespace-pre-wrap text-slate-800">{{ $meta['comments_for_author'] }}</p>
                 @endif
             @endif
 
             @if ($event['kind'] === 'editorial_decision')
-                @if (! empty($meta['decision']) || ! empty($meta['recorded_by']))
+                @if (! $forAuthor && (! empty($meta['decision']) || ! empty($meta['recorded_by'])))
                     <p class="mt-1 text-slate-600">
                         @if (! empty($meta['decision']))
                             <strong>{{ SubmissionEditorTimeline::formatDecisionLabel($meta['decision']) }}</strong>
@@ -59,7 +55,7 @@
                     </p>
                 @endif
                 @if (! empty($meta['decision_letter']))
-                    <p class="mt-2 text-xs font-semibold uppercase text-slate-500">Decision letter</p>
+                    <p class="mt-2 text-xs font-semibold uppercase text-slate-500">{{ $forAuthor ? 'Letter from editor' : 'Decision letter' }}</p>
                     <p class="mt-1 whitespace-pre-wrap text-slate-800">{{ $meta['decision_letter'] }}</p>
                 @endif
             @endif

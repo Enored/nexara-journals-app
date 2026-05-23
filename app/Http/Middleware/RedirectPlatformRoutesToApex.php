@@ -16,6 +16,7 @@ class RedirectPlatformRoutesToApex
         '/login',
         '/register',
         '/dashboard',
+        '/settings',
         '/admin',
         '/author',
         '/editor',

@@ -65,24 +65,10 @@
 
             @can('recordDecision', $submission)
                 @if ($submission->status === \App\Enums\SubmissionStatus::UnderReview)
-                    <section class="dash-card p-6">
-                        <h2 class="text-lg font-semibold text-slate-900">Editorial decision</h2>
-                        <p class="mt-1 text-sm text-slate-600">Record the outcome for <strong>version {{ $submission->version }}</strong> and the letter to the author.</p>
-                        <form method="POST" action="{{ platform_route('editor.submissions.decision', $submission) }}" class="mt-4 space-y-4">
-                            @csrf
-                            <div>
-                                <label class="dash-field-label">Decision</label>
-                                <select name="decision" required class="dash-select mt-1 w-full max-w-md">
-                                    <option value="accept">Accept</option>
-                                    <option value="minor_revision">Request minor revision</option>
-                                    <option value="major_revision">Request major revision</option>
-                                    <option value="reject">Reject</option>
-                                </select>
-                            </div>
-                            <x-dash.textarea name="decision_letter" label="Decision letter" rows="8" required>{{ old('decision_letter') }}</x-dash.textarea>
-                            <x-dash.button type="submit" variant="secondary" class="!bg-slate-900 !text-white hover:!bg-slate-800">Send decision</x-dash.button>
-                        </form>
-                    </section>
+                    @include('dashboard.editor.partials.editorial-decision-form', [
+                        'submission' => $submission,
+                        'roundReviews' => $roundReviews,
+                    ])
                 @endif
             @endcan
         </div>
@@ -128,27 +114,28 @@
 
             @can('publish', $submission)
                 <section class="dash-card border-emerald-200 bg-emerald-50/50 p-6">
-                    <h2 class="text-lg font-semibold text-slate-900">Publish in an issue</h2>
-                    <p class="mt-1 text-sm text-slate-600">Assign this accepted manuscript to a journal issue.</p>
-                    <p class="mt-2 text-sm">
-                        <a href="{{ journal_front_url($submission->journal, '/editions') }}" class="font-medium text-teal-700 hover:underline">Manage issues</a>
-                        ·
-                        <a href="{{ journal_front_url($submission->journal, '/editions/create') }}" class="font-medium text-teal-700 hover:underline">New issue</a>
-                    </p>
-                    @if ($editionsForPublish->isEmpty())
-                        <p class="mt-3 text-sm text-amber-900">No issues exist yet. Create at least one issue before publishing.</p>
+                    <h2 class="text-lg font-semibold text-slate-900">Add to issue</h2>
+                    <p class="mt-1 text-sm text-slate-600">Slot this accepted manuscript into a <strong>draft</strong> issue. It becomes public when the issue is published from the admin issues screen.</p>
+                    @if ($submission->edition_id && $submission->status === \App\Enums\SubmissionStatus::Accepted)
+                        <p class="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                            Slotted in <strong>{{ $submission->edition?->label() ?? 'issue' }}</strong> (draft until published).
+                        </p>
+                    @elseif ($submission->status === \App\Enums\SubmissionStatus::Published && $submission->edition)
+                        <p class="mt-3 text-sm text-emerald-800">Live in <strong>{{ $submission->edition->label() }}</strong>.</p>
+                    @elseif ($editionsForPublish->isEmpty())
+                        <p class="mt-3 text-sm text-amber-900">No draft issues yet. A platform admin can create one under Journals → Issues.</p>
                     @else
                         <form method="POST" action="{{ platform_route('editor.submissions.publish', $submission) }}" class="mt-4 space-y-3">
                             @csrf
                             <div>
-                                <label class="dash-field-label">Issue</label>
+                                <label class="dash-field-label">Draft issue</label>
                                 <select name="edition_id" required class="dash-select mt-1 w-full">
                                     @foreach ($editionsForPublish as $ed)
-                                        <option value="{{ $ed->id }}">Vol. {{ $ed->volume }}, No. {{ $ed->issue }}@if ($ed->title) — {{ $ed->title }}@endif</option>
+                                        <option value="{{ $ed->id }}" @selected($submission->edition_id === $ed->id)>{{ $ed->label() }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <x-dash.button type="submit" class="bg-emerald-700 hover:bg-emerald-800">Publish</x-dash.button>
+                            <x-dash.button type="submit" class="bg-emerald-700 hover:bg-emerald-800">Add to issue</x-dash.button>
                         </form>
                     @endif
                 </section>

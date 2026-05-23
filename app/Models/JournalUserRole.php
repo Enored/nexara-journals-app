@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\JournalRole;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,5 +39,14 @@ class JournalUserRole extends Model
     public function assignedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeAssignable(Builder $query): Builder
+    {
+        return $query->where('role', '!=', JournalRole::Author);
     }
 }

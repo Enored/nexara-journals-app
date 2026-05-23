@@ -91,6 +91,10 @@ class DashboardNavigation
             return 'reviewer';
         }
 
+        if ($activeNav === 'settings') {
+            return 'overview';
+        }
+
         return match ($activeNav) {
             'author' => 'author',
             'reviewer' => 'reviewer',

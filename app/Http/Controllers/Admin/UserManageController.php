@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\AdminUserIndexFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class UserManageController extends Controller
@@ -24,7 +25,7 @@ class UserManageController extends Controller
             'users' => $users,
             'filters' => $filters,
             'journals' => $journals,
-            'roles' => JournalRole::cases(),
+            'roles' => JournalRole::assignable(),
             'activeFilterPills' => AdminUserIndexFilters::activeFilterPills($filters, $journals),
             'hasActiveFilters' => AdminUserIndexFilters::hasActiveFilters($filters),
         ]);
@@ -50,7 +51,7 @@ class UserManageController extends Controller
 
         foreach (Journal::query()->cursor() as $journal) {
             $flags = $rolesInput[$journal->id] ?? [];
-            foreach (JournalRole::cases() as $role) {
+            foreach (JournalRole::assignable() as $role) {
                 if (! empty($flags[$role->value])) {
                     JournalUserRole::query()->create([
                         'user_id' => $user->id,
@@ -68,14 +69,15 @@ class UserManageController extends Controller
     }
 
     /**
-     * @return array{user: User, journals: \Illuminate\Support\Collection, existing: \Illuminate\Support\Collection}
+     * @return array{user: User, journals: Collection, existing: Collection}
      */
     private function rolesFormData(User $user): array
     {
         return [
             'user' => $user,
             'journals' => Journal::query()->orderBy('name')->get(),
-            'existing' => $user->journalUserRoles()->get()->groupBy('journal_id'),
+            'existing' => $user->staffJournalRoles()->get()->groupBy('journal_id'),
+            'roles' => JournalRole::assignable(),
         ];
     }
 }

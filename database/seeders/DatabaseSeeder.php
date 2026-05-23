@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $admin = User::query()->create([
+            'first_name' => 'Platform',
+            'last_name' => 'Admin',
             'name' => 'Platform Admin',
             'email' => 'admin@example.com',
             'password' => 'password',
@@ -24,18 +26,24 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $editor = User::query()->create([
+            'first_name' => 'Demo',
+            'last_name' => 'Editor',
             'name' => 'Demo Editor',
             'email' => 'editor@example.com',
             'password' => 'password',
         ]);
 
         $reviewer = User::query()->create([
+            'first_name' => 'Demo',
+            'last_name' => 'Reviewer',
             'name' => 'Demo Reviewer',
             'email' => 'reviewer@example.com',
             'password' => 'password',
         ]);
 
         $author = User::query()->create([
+            'first_name' => 'Demo',
+            'last_name' => 'Author',
             'name' => 'Demo Author',
             'email' => 'author@example.com',
             'password' => 'password',

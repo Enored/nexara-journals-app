@@ -45,8 +45,7 @@ class ReviewerTaskController extends Controller
             'originality_score' => ['required', 'integer', 'min:1', 'max:5'],
             'methodology_score' => ['required', 'integer', 'min:1', 'max:5'],
             'clarity_score' => ['required', 'integer', 'min:1', 'max:5'],
-            'comments_for_author' => ['required', 'string'],
-            'comments_for_editor' => ['nullable', 'string'],
+            'comments_for_editor' => ['required', 'string'],
             'recommendation' => ['required', 'string', 'in:accept,minor_revision,major_revision,reject'],
         ]);
 
@@ -57,8 +56,8 @@ class ReviewerTaskController extends Controller
             'originality_score' => $data['originality_score'],
             'methodology_score' => $data['methodology_score'],
             'clarity_score' => $data['clarity_score'],
-            'comments_for_author' => $data['comments_for_author'],
-            'comments_for_editor' => $data['comments_for_editor'] ?? null,
+            'comments_for_author' => '',
+            'comments_for_editor' => $data['comments_for_editor'],
             'recommendation' => ReviewRecommendation::from($data['recommendation']),
             'attachment_file_id' => null,
             'submitted_at' => now(),

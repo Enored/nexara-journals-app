@@ -23,13 +23,17 @@
         </div>
     </div>
 
+    <p class="mb-4 text-sm text-slate-600">Create <strong>draft</strong> issues, add accepted articles, then <strong>publish</strong> when ready — similar to scheduling content before it goes public.</p>
+
     <x-dash.table>
         <x-slot:header>
             <tr>
                 <th>Volume / Issue</th>
                 <th>Title</th>
-                <th>Publication date</th>
-                <th class="text-right">Published articles</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th class="text-right">Articles</th>
+                <th class="text-right">Actions</th>
             </tr>
         </x-slot:header>
         <x-slot:body>
@@ -37,13 +41,30 @@
                 <tr>
                     <td class="font-medium text-slate-900">{{ $e->volume }} / {{ $e->issue }}</td>
                     <td class="text-slate-600">{{ $e->title ?? '—' }}</td>
+                    <td>@include('partials.edition-status', ['status' => $e->status])</td>
                     <td class="text-slate-600">{{ $e->published_at?->format('Y-m-d') ?? '—' }}</td>
-                    <td class="text-right text-slate-600">{{ $e->submissions_count }}</td>
+                    <td class="text-right text-slate-600">
+                        <span class="font-medium tabular-nums text-slate-900">{{ (int) ($e->slotted_count ?? 0) + (int) ($e->live_count ?? 0) }}</span>
+                        @if ((int) ($e->slotted_count ?? 0) + (int) ($e->live_count ?? 0) > 0)
+                            <span class="mt-0.5 block text-xs text-slate-400">
+                                @if ((int) ($e->slotted_count ?? 0) > 0 && (int) ($e->live_count ?? 0) > 0)
+                                    {{ (int) $e->slotted_count }} slotted · {{ (int) $e->live_count }} live
+                                @elseif ((int) ($e->live_count ?? 0) > 0)
+                                    {{ (int) $e->live_count }} live
+                                @else
+                                    {{ (int) $e->slotted_count }} slotted
+                                @endif
+                            </span>
+                        @endif
+                    </td>
+                    <td class="whitespace-nowrap text-right">
+                        <x-dash.link :href="platform_route('admin.journals.editions.show', [$journal, $e])">Manage</x-dash.link>
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="4" class="!p-0">
-                        <x-dash.empty title="No issues yet" description="Create an issue before assigning accepted manuscripts to a volume.">
+                    <td colspan="6" class="!p-0">
+                        <x-dash.empty title="No issues yet" description="Create a draft issue, add accepted articles, then publish when ready.">
                             <x-dash.button
                                 type="button"
                                 data-edition-create-open
@@ -72,12 +93,7 @@
                     <h2 id="edition-create-modal-title" class="text-base font-semibold text-slate-900">New issue</h2>
                     <p id="edition-create-modal-subtitle" class="mt-0.5 truncate text-sm text-slate-500"></p>
                 </div>
-                <button
-                    type="button"
-                    class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                    data-edition-create-close
-                    aria-label="Close"
-                >
+                <button type="button" class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" data-edition-create-close aria-label="Close">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -98,64 +114,35 @@
     const modal = document.getElementById('edition-create-modal');
     const body = document.getElementById('edition-create-modal-body');
     const subtitle = document.getElementById('edition-create-modal-subtitle');
-    if (!modal || !body || !subtitle) {
-        return;
-    }
+    if (!modal || !body || !subtitle) return;
 
     let lastTrigger = null;
-
-    const open = () => {
-        modal.classList.add('is-open');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('overflow-hidden');
-    };
-
+    const open = () => { modal.classList.add('is-open'); modal.setAttribute('aria-hidden', 'false'); document.body.classList.add('overflow-hidden'); };
     const close = () => {
         modal.classList.remove('is-open');
         modal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('overflow-hidden');
         body.innerHTML = '<p class="text-sm text-slate-500">Loading…</p>';
-        if (lastTrigger) {
-            lastTrigger.focus();
-            lastTrigger = null;
-        }
+        lastTrigger?.focus();
+        lastTrigger = null;
     };
-
     const load = async (url, journalName) => {
         subtitle.textContent = journalName;
         body.innerHTML = '<p class="text-sm text-slate-500">Loading…</p>';
         open();
-
         try {
-            const response = await fetch(url, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' },
-                credentials: 'same-origin',
-            });
-            if (!response.ok) {
-                throw new Error('Failed to load');
-            }
-            body.innerHTML = await response.text();
+            const r = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' }, credentials: 'same-origin' });
+            if (!r.ok) throw new Error();
+            body.innerHTML = await r.text();
         } catch {
-            body.innerHTML = '<p class="text-sm text-red-600">Could not load form. Please try again.</p>';
+            body.innerHTML = '<p class="text-sm text-red-600">Could not load form.</p>';
         }
     };
-
     document.querySelectorAll('[data-edition-create-open]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            lastTrigger = btn;
-            load(btn.dataset.url, btn.dataset.journalName || '');
-        });
+        btn.addEventListener('click', () => { lastTrigger = btn; load(btn.dataset.url, btn.dataset.journalName || ''); });
     });
-
-    modal.querySelectorAll('[data-edition-create-close]').forEach((el) => {
-        el.addEventListener('click', close);
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
-            close();
-        }
-    });
+    modal.querySelectorAll('[data-edition-create-close]').forEach((el) => el.addEventListener('click', close));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('is-open')) close(); });
 })();
 </script>
 @endpush

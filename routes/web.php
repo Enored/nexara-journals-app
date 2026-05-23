@@ -20,8 +20,9 @@ use App\Http\Controllers\JournalSubmissionWebController;
 use App\Http\Controllers\PublicArticleController;
 use App\Http\Controllers\ReviewerTaskController;
 use App\Http\Controllers\ReviewInvitationController;
-use App\Http\Controllers\SubmissionPublishController;
 use App\Http\Controllers\SubmissionLegacyRedirectController;
+use App\Http\Controllers\SubmissionPublishController;
+use App\Http\Controllers\UserSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -55,6 +56,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::get('/dashboard', [DashboardHubController::class, 'index'])->name('dashboard');
+
+    Route::get('/settings', [UserSettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('/settings/profile', [UserSettingsController::class, 'updateProfile'])->name('settings.profile.update');
+    Route::put('/settings/password', [UserSettingsController::class, 'updatePassword'])->name('settings.password.update');
 
     Route::get('/author/dashboard', [RoleDashboardController::class, 'author'])->name('author.dashboard');
     Route::get('/author/submissions', AuthorSubmissionController::class)->name('author.submissions');
@@ -92,6 +97,13 @@ Route::middleware('auth')->group(function () {
         Route::get('journals/{journal}/editions', [JournalEditionManageController::class, 'index'])->name('journals.editions.index');
         Route::get('journals/{journal}/editions/create', [JournalEditionManageController::class, 'create'])->name('journals.editions.create');
         Route::post('journals/{journal}/editions', [JournalEditionManageController::class, 'store'])->name('journals.editions.store');
+        Route::get('journals/{journal}/editions/{edition}', [JournalEditionManageController::class, 'show'])->name('journals.editions.show');
+        Route::put('journals/{journal}/editions/{edition}', [JournalEditionManageController::class, 'update'])->name('journals.editions.update');
+        Route::delete('journals/{journal}/editions/{edition}', [JournalEditionManageController::class, 'destroy'])->name('journals.editions.destroy');
+        Route::post('journals/{journal}/editions/{edition}/publish', [JournalEditionManageController::class, 'publishIssue'])->name('journals.editions.publish');
+        Route::post('journals/{journal}/editions/{edition}/unpublish', [JournalEditionManageController::class, 'unpublishIssue'])->name('journals.editions.unpublish');
+        Route::post('journals/{journal}/editions/{edition}/articles', [JournalEditionManageController::class, 'assignArticle'])->name('journals.editions.articles.assign');
+        Route::delete('journals/{journal}/editions/{edition}/articles/{submission}', [JournalEditionManageController::class, 'removeArticle'])->name('journals.editions.articles.remove');
         Route::get('journals/{journal}/edit', [JournalManageController::class, 'edit'])->name('journals.edit');
         Route::put('journals/{journal}', [JournalManageController::class, 'update'])->name('journals.update');
 

@@ -18,8 +18,14 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
+        'mobile',
+        'bio',
+        'city',
+        'country',
         'orcid_id',
         'affiliation',
         'expertise',
@@ -48,6 +54,12 @@ class User extends Authenticatable
         return $this->hasMany(JournalUserRole::class);
     }
 
+    /** Staff roles (reviewer, editor, journal admin) — not the implicit author role. */
+    public function staffJournalRoles(): HasMany
+    {
+        return $this->journalUserRoles()->assignable();
+    }
+
     public function submissions(): HasMany
     {
         return $this->hasMany(Submission::class, 'author_id');
@@ -61,6 +73,27 @@ class User extends Authenticatable
     public function isPlatformAdmin(): bool
     {
         return (bool) $this->is_platform_admin;
+    }
+
+    public function syncDisplayName(): void
+    {
+        $this->name = trim($this->first_name.' '.$this->last_name);
+    }
+
+    public function initials(): string
+    {
+        $first = mb_substr(trim((string) $this->first_name), 0, 1);
+        $last = mb_substr(trim((string) $this->last_name), 0, 1);
+
+        if ($first !== '' && $last !== '') {
+            return mb_strtoupper($first.$last);
+        }
+
+        if ($first !== '') {
+            return mb_strtoupper($first);
+        }
+
+        return mb_strtoupper(mb_substr(trim((string) $this->name), 0, 1) ?: '?');
     }
 
     public function hasJournalRole(Journal $journal, JournalRole $role): bool

@@ -12,6 +12,8 @@ use App\Models\Submission;
 use App\Models\SubmissionFile;
 use App\Models\User;
 use App\Models\WorkflowNotification;
+use App\Support\SubmissionAuthorAnonymizer;
+use App\Support\SubmissionVersionRecorder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -68,16 +70,23 @@ class SubmissionController extends Controller
             'submitted_at' => now(),
         ]);
 
-        \App\Support\SubmissionVersionRecorder::record($submission->fresh());
+        SubmissionVersionRecorder::record($submission->fresh());
 
         return response()->json($submission->load('journal'), 201);
     }
 
     public function show(Request $request, Submission $submission): JsonResponse
     {
-        $this->authorizeView($request->user(), $submission);
+        $user = $request->user();
+        $this->authorizeView($user, $submission);
 
-        return response()->json($submission->load(['journal', 'author', 'files', 'reviewAssignments.reviewer', 'reviews']));
+        $submission->load(['journal', 'author', 'files', 'reviewAssignments.reviewer', 'reviewAssignments.editor', 'reviews.reviewer', 'editorialDecisions.recorder']);
+
+        if (SubmissionAuthorAnonymizer::shouldAnonymize($user, $submission)) {
+            SubmissionAuthorAnonymizer::apply($submission);
+        }
+
+        return response()->json($submission);
     }
 
     public function update(Request $request, Submission $submission): JsonResponse

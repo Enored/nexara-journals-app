@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EditionStatus;
 use App\Enums\JournalRole;
 use App\Http\Controllers\Controller;
 use App\Models\Journal;
@@ -29,9 +30,18 @@ class EditionController extends Controller
             'issue' => ['required', 'integer', 'min:1', 'max:65535'],
             'title' => ['nullable', 'string', 'max:255'],
             'published_at' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'in:draft,published'],
         ]);
 
-        $edition = $journal->editions()->create($data);
+        $edition = $journal->editions()->create([
+            'volume' => $data['volume'],
+            'issue' => $data['issue'],
+            'title' => $data['title'] ?? null,
+            'published_at' => $data['published_at'] ?? null,
+            'status' => ($data['status'] ?? 'draft') === 'published'
+                ? EditionStatus::Published
+                : EditionStatus::Draft,
+        ]);
 
         return response()->json($edition, 201);
     }

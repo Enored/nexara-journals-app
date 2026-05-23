@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Enums\JournalRole;
+use App\Models\Journal;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -19,10 +20,15 @@ final class AdminUserIndexFilters
     {
         $roleValue = $request->string('role')->toString();
 
+        $role = $roleValue !== '' ? JournalRole::tryFrom($roleValue) : null;
+        if ($role !== null && ! $role->isAssignable()) {
+            $role = null;
+        }
+
         return [
             'q' => trim($request->string('q')->toString()),
             'journal' => JournalSlug::fromRequest($request),
-            'role' => $roleValue !== '' ? JournalRole::tryFrom($roleValue) : null,
+            'role' => $role,
         ];
     }
 
@@ -60,7 +66,7 @@ final class AdminUserIndexFilters
      */
     public static function paginate(array $filters): LengthAwarePaginator
     {
-        $query = User::query()->with('journalUserRoles.journal');
+        $query = User::query()->with(['staffJournalRoles' => fn ($q) => $q->with('journal')]);
         self::applyToQuery($query, $filters);
 
         return $query
@@ -71,7 +77,7 @@ final class AdminUserIndexFilters
 
     /**
      * @param  array{q: string, journal: string|null, role: JournalRole|null}  $filters
-     * @param  iterable<\App\Models\Journal>  $journals
+     * @param  iterable<Journal>  $journals
      * @return array<int, array{key: string, label: string, url: string}>
      */
     public static function activeFilterPills(array $filters, iterable $journals): array
@@ -98,7 +104,7 @@ final class AdminUserIndexFilters
         if ($filters['role'] !== null) {
             $pills[] = [
                 'key' => 'role',
-                'label' => 'Role: '.str_replace('_', ' ', ucfirst($filters['role']->value)),
+                'label' => 'Role: '.$filters['role']->label(),
                 'url' => self::indexUrl(self::without($filters, 'role')),
             ];
         }
@@ -160,7 +166,7 @@ final class AdminUserIndexFilters
         $params = array_intersect_key($return, array_flip($allowed));
 
         if (isset($params['journal_id']) && ! isset($params[JournalSlug::QUERY_KEY])) {
-            $legacy = \App\Models\Journal::query()->find($params['journal_id']);
+            $legacy = Journal::query()->find($params['journal_id']);
             if ($legacy) {
                 $params[JournalSlug::QUERY_KEY] = $legacy->subdomain;
             }

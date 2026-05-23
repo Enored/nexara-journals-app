@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EditionStatus;
 use App\Enums\SubmissionStatus;
 use App\Models\Submission;
 use Illuminate\View\View;
@@ -16,6 +17,10 @@ class PublicArticleController extends Controller
         }
 
         $submission->load(['author', 'edition', 'journal']);
+
+        if ($submission->edition && $submission->edition->status !== EditionStatus::Published) {
+            abort(404);
+        }
 
         return view('journal.article', [
             'journal' => $journal,

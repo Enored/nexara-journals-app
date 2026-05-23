@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EditionStatus;
 use App\Enums\SubmissionStatus;
 use App\Models\Journal;
 use App\Models\Submission;
@@ -25,6 +26,7 @@ class HomeController extends Controller
                 ->where('submissions.status', SubmissionStatus::Published)
                 ->whereNotNull('submissions.edition_id')
                 ->join('editions', 'submissions.edition_id', '=', 'editions.id')
+                ->where('editions.status', EditionStatus::Published)
                 ->with(['author', 'edition'])
                 ->orderByDesc('editions.published_at')
                 ->orderByDesc('editions.volume')

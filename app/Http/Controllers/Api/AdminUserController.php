@@ -8,13 +8,14 @@ use App\Models\JournalUserRole;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
         $users = User::query()
-            ->with('journalUserRoles.journal')
+            ->with(['staffJournalRoles.journal'])
             ->orderBy('name')
             ->paginate(30);
 
@@ -23,25 +24,28 @@ class AdminUserController extends Controller
 
     public function updateRoles(Request $request, User $user): JsonResponse
     {
+        $assignable = array_map(fn (JournalRole $role) => $role->value, JournalRole::assignable());
+
         $data = $request->validate([
-            'assignments' => ['required', 'array'],
+            'assignments' => ['present', 'array'],
             'assignments.*.journal_id' => ['required', 'uuid', 'exists:journals,id'],
-            'assignments.*.role' => ['required', 'string', 'in:author,reviewer,editor,admin'],
+            'assignments.*.roles' => ['array'],
+            'assignments.*.roles.*' => ['string', Rule::in($assignable)],
         ]);
 
+        JournalUserRole::query()->where('user_id', $user->id)->delete();
+
         foreach ($data['assignments'] as $row) {
-            JournalUserRole::query()->updateOrCreate(
-                [
+            foreach ($row['roles'] ?? [] as $roleValue) {
+                JournalUserRole::query()->create([
                     'user_id' => $user->id,
                     'journal_id' => $row['journal_id'],
-                    'role' => JournalRole::from($row['role']),
-                ],
-                [
+                    'role' => JournalRole::from($roleValue),
                     'assigned_by' => $request->user()->id,
-                ]
-            );
+                ]);
+            }
         }
 
-        return response()->json($user->fresh()->load('journalUserRoles.journal'));
+        return response()->json($user->fresh()->load('staffJournalRoles.journal'));
     }
 }

@@ -6,6 +6,7 @@ use App\Enums\ReviewAssignmentStatus;
 use App\Enums\SubmissionStatus;
 use App\Models\ReviewAssignment;
 use App\Models\Submission;
+use App\Models\SubmissionVersion;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -19,11 +20,11 @@ class SubmissionEditorTimeline
      *         title: string,
      *         abstract: string,
      *         keywords: array,
-     *         submitted_at: \Illuminate\Support\Carbon,
-     *         files: \Illuminate\Support\Collection,
-     *         events: list<array{kind: string, label: string, at: \Illuminate\Support\Carbon, meta: array}>
+     *         submitted_at: Carbon,
+     *         files: Collection,
+     *         events: list<array{kind: string, label: string, at: Carbon, meta: array}>
      *     }>,
-     *     published: ?array{at: \Illuminate\Support\Carbon, url: string}
+     *     published: ?array{at: Carbon, url: string}
      * }
      */
     public static function build(Submission $submission, bool $forAuthor = false): array
@@ -176,8 +177,7 @@ class SubmissionEditorTimeline
                 'meta' => [
                     'recommendation' => str_replace('_', ' ', $rev->recommendation->value),
                     'scores' => $rev->originality_score.'/'.$rev->methodology_score.'/'.$rev->clarity_score,
-                    'comments_for_editor' => $rev->comments_for_editor,
-                    'comments_for_author' => $rev->comments_for_author,
+                    'comments_for_editor' => trim((string) ($rev->comments_for_editor ?: $rev->comments_for_author)),
                 ],
             ];
         }
@@ -217,10 +217,11 @@ class SubmissionEditorTimeline
     private static function eventsForVersion(
         Submission $submission,
         int $version,
-        ?\App\Models\SubmissionVersion $snapshot = null,
+        ?SubmissionVersion $snapshot = null,
         bool $forAuthor = false,
     ): array {
         $events = [];
+        $roundAssignments = $submission->reviewAssignments->where('round_version', $version);
 
         if ($version > 1 && $snapshot?->submitted_at) {
             $events[] = [
@@ -233,7 +234,7 @@ class SubmissionEditorTimeline
             ];
         }
 
-        foreach ($submission->reviewAssignments->where('round_version', $version) as $assignment) {
+        foreach ($roundAssignments as $assignment) {
             if (! $forAuthor && $assignment->invited_at) {
                 $events[] = [
                     'kind' => 'reviewer_invited',
@@ -264,24 +265,18 @@ class SubmissionEditorTimeline
                 ];
             }
 
-            if ($assignment->review) {
+            if ($assignment->review && ! $forAuthor) {
                 $rev = $assignment->review;
-                if ($forAuthor && blank($rev->comments_for_author)) {
-                    continue;
-                }
+                $confidentialComments = trim((string) ($rev->comments_for_editor ?: $rev->comments_for_author));
 
                 $events[] = [
                     'kind' => 'review_submitted',
-                    'label' => $forAuthor ? 'Reviewer feedback received' : 'Review submitted by '.$assignment->reviewer->name,
+                    'label' => 'Review submitted by '.$assignment->reviewer->name,
                     'at' => Carbon::parse($rev->submitted_at ?? $assignment->completed_at),
-                    'meta' => $forAuthor ? [
-                        'recommendation' => str_replace('_', ' ', $rev->recommendation->value),
-                        'comments_for_author' => $rev->comments_for_author,
-                    ] : [
+                    'meta' => [
                         'recommendation' => str_replace('_', ' ', $rev->recommendation->value),
                         'scores' => $rev->originality_score.'/'.$rev->methodology_score.'/'.$rev->clarity_score,
-                        'comments_for_editor' => $rev->comments_for_editor,
-                        'comments_for_author' => $rev->comments_for_author,
+                        'comments_for_editor' => $confidentialComments,
                     ],
                 ];
             }
@@ -291,10 +286,11 @@ class SubmissionEditorTimeline
             $events[] = [
                 'kind' => 'editorial_decision',
                 'label' => $forAuthor
-                    ? 'Editorial decision: '.self::formatDecisionLabel($decision->decision)
+                    ? SubmissionPartyLabels::EDITOR.': '.self::formatDecisionLabel($decision->decision)
                     : 'Editorial decision: '.self::formatDecisionLabel($decision->decision),
                 'at' => Carbon::parse($decision->created_at),
                 'meta' => $forAuthor ? [
+                    'party_label' => SubmissionPartyLabels::EDITOR,
                     'decision' => $decision->decision,
                     'decision_letter' => $decision->decision_letter,
                 ] : [
@@ -311,9 +307,13 @@ class SubmissionEditorTimeline
             && $submission->decision_letter) {
             $events[] = [
                 'kind' => 'editorial_decision',
-                'label' => 'Editorial decision',
+                'label' => $forAuthor ? SubmissionPartyLabels::EDITOR.' decision' : 'Editorial decision',
                 'at' => Carbon::parse($submission->updated_at),
-                'meta' => [
+                'meta' => $forAuthor ? [
+                    'party_label' => SubmissionPartyLabels::EDITOR,
+                    'decision' => '',
+                    'decision_letter' => $submission->decision_letter,
+                ] : [
                     'decision' => '',
                     'decision_letter' => $submission->decision_letter,
                     'recorded_by' => null,

@@ -56,7 +56,7 @@
             @elseif ($assignment->status === ReviewAssignmentStatus::Accepted && ! $assignment->review)
                 <section class="dash-card p-6">
                     <h2 class="text-lg font-semibold text-slate-900">Submit your review</h2>
-                    <p class="mt-1 text-sm text-slate-600">Scores and confidential comments are visible to the editor only. Comments for the author will be shared if the editor requests revision or accepts the manuscript.</p>
+                    <p class="mt-1 text-sm text-slate-600">Your report is <strong>confidential to the editor</strong>. The author will not see it directly; the editor may quote selected points in their decision letter.</p>
                     <form method="POST" action="{{ platform_route('review-tasks.store', $assignment) }}" class="mt-4 space-y-4">
                         @csrf
                         <div class="grid gap-4 sm:grid-cols-3">
@@ -73,8 +73,7 @@
                                 <option value="reject" @selected(old('recommendation') === 'reject')>Reject</option>
                             </select>
                         </div>
-                        <x-dash.textarea name="comments_for_author" label="Comments for author" rows="6" required>{{ old('comments_for_author') }}</x-dash.textarea>
-                        <x-dash.textarea name="comments_for_editor" label="Comments for editor (optional)" rows="4">{{ old('comments_for_editor') }}</x-dash.textarea>
+                        <x-dash.textarea name="comments_for_editor" label="Confidential comments to the editor" rows="8" required>{{ old('comments_for_editor') }}</x-dash.textarea>
                         <x-dash.button type="submit">Submit review</x-dash.button>
                     </form>
                 </section>
