@@ -1,12 +1,46 @@
+import '../css/blog-rich-content.css';
 import { initDashboardToasts } from './dashboard-toast';
 import { initAjaxModal } from './admin-ajax-modal';
 import { initConfirmModals } from './admin-confirm-modal';
 import { initDashListPartials } from './dashboard-list-partial';
+import { initBlogEditor } from './blog-editor';
+
+function initDashboardThemeToggle() {
+    const button = document.querySelector('[data-dash-theme-toggle]');
+
+    if (!button) {
+        return;
+    }
+
+    const syncIcons = () => {
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+        button.querySelector('.dash-theme-icon-light')?.classList.toggle('d-none', isDark);
+        button.querySelector('.dash-theme-icon-dark')?.classList.toggle('d-none', ! isDark);
+        button.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+        button.setAttribute('title', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    };
+
+    syncIcons();
+
+    button.addEventListener('click', () => {
+        window.__dashThemeToggle?.();
+        syncIcons();
+
+        if (typeof window.lucide !== 'undefined') {
+            window.lucide.createIcons();
+        }
+    });
+
+    document.addEventListener('dash-theme-changed', syncIcons);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
+    initDashboardThemeToggle();
     initDashboardToasts();
     initConfirmModals();
     initDashListPartials();
+    initBlogEditor();
 
     initAjaxModal({
         id: 'volume-create-modal',

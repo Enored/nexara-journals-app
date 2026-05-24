@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ImpersonationController;
+use App\Http\Controllers\Admin\BlogManageController;
 use App\Http\Controllers\Admin\JournalEditionManageController;
 use App\Http\Controllers\Admin\JournalManageController;
 use App\Http\Controllers\Admin\UserManageController;
@@ -122,6 +123,13 @@ Route::middleware('auth')->group(function () {
         Route::post('users/{user}/impersonate', [UserManageController::class, 'impersonate'])->name('users.impersonate');
         Route::get('users/{user}/roles', [UserManageController::class, 'editRoles'])->name('users.edit-roles');
         Route::put('users/{user}/roles', [UserManageController::class, 'updateRoles'])->name('users.update-roles');
+
+        Route::get('blogs', [BlogManageController::class, 'index'])->name('blogs.index');
+        Route::get('blogs/create', [BlogManageController::class, 'create'])->name('blogs.create');
+        Route::post('blogs', [BlogManageController::class, 'store'])->name('blogs.store');
+        Route::get('blogs/{blog}/edit', [BlogManageController::class, 'edit'])->name('blogs.edit');
+        Route::put('blogs/{blog}', [BlogManageController::class, 'update'])->name('blogs.update');
+        Route::delete('blogs/{blog}', [BlogManageController::class, 'destroy'])->name('blogs.destroy');
     });
 
     Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {

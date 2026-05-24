@@ -7,7 +7,8 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/css/dashboard-ubold-bridge.css',
+                'resources/css/dashboard-bridge.css',
+                'resources/js/dashboard-theme.js',
                 'resources/js/dashboard.js',
             ],
             refresh: true,

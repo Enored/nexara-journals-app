@@ -1,4 +1,26 @@
-/* UBold layout rhythm (matches index.html / content-page spacing) */
+/* Fixed sidenav: navigation scrolls, user card pinned to bottom */
+.sidenav-menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidenav-menu > .sidenav-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.sidenav-user-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+    margin-bottom: 0;
+    border-top: 1px solid var(--bs-border-color);
+    border-radius: 0;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover !important;
+}
+
+/* Dashboard layout rhythm (content-page spacing) */
 .content-page > .container-fluid {
     padding-top: var(--theme-gutter-x, 1.5rem);
     padding-bottom: var(--theme-gutter-x, 1.5rem);
@@ -12,7 +34,7 @@
     padding-inline: 0.25rem;
 }
 
-/* Legacy dash-* → UBold / Bootstrap bridge */
+/* Legacy dash-* → theme / Bootstrap bridge */
 
 .dash-card {
     background-color: var(--bs-card-bg, #fff);

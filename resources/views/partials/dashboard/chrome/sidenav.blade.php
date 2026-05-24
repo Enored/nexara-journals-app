@@ -12,12 +12,12 @@
 <div class="sidenav-menu">
     <a href="{{ platform_route('dashboard') }}" class="logo">
         <span class="logo logo-light">
-            <span class="logo-lg"><img src="{{ ubold_asset('images/logo.png') }}" alt="{{ config('app.name') }}"></span>
-            <span class="logo-sm"><img src="{{ ubold_asset('images/logo-sm.png') }}" alt="{{ config('app.name') }}"></span>
+            <span class="logo-lg"><img src="{{ dashboard_asset('images/logo.png') }}" alt="{{ config('app.name') }}"></span>
+            <span class="logo-sm"><img src="{{ dashboard_asset('images/logo-sm.png') }}" alt="{{ config('app.name') }}"></span>
         </span>
         <span class="logo logo-dark">
-            <span class="logo-lg"><img src="{{ ubold_asset('images/logo-black.png') }}" alt="{{ config('app.name') }}"></span>
-            <span class="logo-sm"><img src="{{ ubold_asset('images/logo-sm.png') }}" alt="{{ config('app.name') }}"></span>
+            <span class="logo-lg"><img src="{{ dashboard_asset('images/logo-black.png') }}" alt="{{ config('app.name') }}"></span>
+            <span class="logo-sm"><img src="{{ dashboard_asset('images/logo-sm.png') }}" alt="{{ config('app.name') }}"></span>
         </span>
     </a>
 
@@ -29,42 +29,7 @@
         <i data-lucide="menu" class="align-middle"></i>
     </button>
 
-    <div class="scrollbar" data-simplebar>
-        <div id="user-profile-settings" class="sidenav-user" style="background: url({{ ubold_asset('images/user-bg-pattern.svg') }})">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <a href="{{ platform_route('settings.edit') }}" class="link-reset">
-                        <span class="avatar-md rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center fw-bold mb-2">
-                            {{ $u->initials() }}
-                        </span>
-                        <span class="sidenav-user-name fw-bold d-block">{{ $u->name }}</span>
-                        <span class="fs-12 fw-semibold text-muted">{{ $u->email }}</span>
-                    </a>
-                </div>
-                <div>
-                    <a class="dropdown-toggle drop-arrow-none link-reset sidenav-user-set-icon" data-bs-toggle="dropdown" data-bs-offset="0,12" href="#!" aria-haspopup="false" aria-expanded="false">
-                        <i data-lucide="settings" class="fs-24 align-middle ms-1"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end">
-                        <div class="dropdown-header noti-title">
-                            <h6 class="text-overflow m-0">Welcome back!</h6>
-                        </div>
-                        <a href="{{ platform_route('settings.edit') }}" class="dropdown-item">
-                            <i data-lucide="settings" class="me-1 fs-lg align-middle"></i>
-                            <span class="align-middle">Account settings</span>
-                        </a>
-                        <form method="POST" action="{{ platform_route('logout') }}">
-                            @csrf
-                            <button type="submit" class="dropdown-item text-danger fw-semibold w-100 text-start border-0 bg-transparent">
-                                <i data-lucide="log-out" class="me-1 fs-lg align-middle"></i>
-                                <span class="align-middle">Log out</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    <div class="scrollbar sidenav-scroll" data-simplebar>
         <div id="sidenav-menu">
             <ul class="side-nav">
                 @if ($showRolePicker)
@@ -100,6 +65,45 @@
                     @endforeach
                 @endif
             </ul>
+        </div>
+    </div>
+
+    <div
+        id="user-profile-settings"
+        class="sidenav-user sidenav-user-footer"
+        style="background-image: url('{{ dashboard_asset('images/user-bg-pattern.svg') }}')"
+    >
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{{ platform_route('settings.edit') }}" class="link-reset">
+                    <span class="avatar-md rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center fw-bold mb-2">
+                        {{ $u->initials() }}
+                    </span>
+                    <span class="sidenav-user-name fw-bold d-block">{{ $u->name }}</span>
+                    <span class="fs-12 fw-semibold text-muted">{{ $u->email }}</span>
+                </a>
+            </div>
+            <div>
+                <a class="dropdown-toggle drop-arrow-none link-reset sidenav-user-set-icon" data-bs-toggle="dropdown" data-bs-offset="0,12" href="#!" aria-haspopup="false" aria-expanded="false">
+                    <i data-lucide="settings" class="fs-24 align-middle ms-1"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <div class="dropdown-header noti-title">
+                        <h6 class="text-overflow m-0">Welcome back!</h6>
+                    </div>
+                    <a href="{{ platform_route('settings.edit') }}" class="dropdown-item">
+                        <i data-lucide="settings" class="me-1 fs-lg align-middle"></i>
+                        <span class="align-middle">Account settings</span>
+                    </a>
+                    <form method="POST" action="{{ platform_route('logout') }}">
+                        @csrf
+                        <button type="submit" class="dropdown-item text-danger fw-semibold w-100 text-start border-0 bg-transparent">
+                            <i data-lucide="log-out" class="me-1 fs-lg align-middle"></i>
+                            <span class="align-middle">Log out</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>

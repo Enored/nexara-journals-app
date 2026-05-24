@@ -5,12 +5,12 @@
         <div class="d-flex align-items-center gap-2">
             <div class="logo-topbar">
                 <a href="{{ platform_route('dashboard') }}" class="logo-light">
-                    <span class="logo-lg"><img src="{{ ubold_asset('images/logo.png') }}" alt="{{ config('app.name') }}"></span>
-                    <span class="logo-sm"><img src="{{ ubold_asset('images/logo-sm.png') }}" alt="{{ config('app.name') }}"></span>
+                    <span class="logo-lg"><img src="{{ dashboard_asset('images/logo.png') }}" alt="{{ config('app.name') }}"></span>
+                    <span class="logo-sm"><img src="{{ dashboard_asset('images/logo-sm.png') }}" alt="{{ config('app.name') }}"></span>
                 </a>
                 <a href="{{ platform_route('dashboard') }}" class="logo-dark">
-                    <span class="logo-lg"><img src="{{ ubold_asset('images/logo-black.png') }}" alt="{{ config('app.name') }}"></span>
-                    <span class="logo-sm"><img src="{{ ubold_asset('images/logo-sm.png') }}" alt="{{ config('app.name') }}"></span>
+                    <span class="logo-lg"><img src="{{ dashboard_asset('images/logo-black.png') }}" alt="{{ config('app.name') }}"></span>
+                    <span class="logo-sm"><img src="{{ dashboard_asset('images/logo-sm.png') }}" alt="{{ config('app.name') }}"></span>
                 </a>
             </div>
 
@@ -34,8 +34,15 @@
             </div>
 
             <div class="topbar-item">
-                <button class="topbar-link btn-theme-setting" data-bs-toggle="offcanvas" data-bs-target="#theme-settings-offcanvas" type="button" aria-label="Theme settings">
-                    <i data-lucide="settings" class="topbar-link-icon"></i>
+                <button
+                    type="button"
+                    class="topbar-link"
+                    data-dash-theme-toggle
+                    aria-label="Switch to dark mode"
+                    title="Toggle light/dark mode"
+                >
+                    <i data-lucide="sun" class="topbar-link-icon dash-theme-icon-light"></i>
+                    <i data-lucide="moon" class="topbar-link-icon dash-theme-icon-dark d-none"></i>
                 </button>
             </div>
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html
     lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-    data-skin="default"
+    data-skin="modern"
     data-bs-theme="light"
     data-menu-color="light"
     data-topbar-color="light"
@@ -16,22 +16,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') — {{ config('app.name') }}</title>
-    <link rel="shortcut icon" href="{{ ubold_asset('images/favicon.ico') }}">
-    <script src="{{ ubold_asset('js/config.js') }}"></script>
-    <link href="{{ ubold_asset('css/vendors.min.css') }}" rel="stylesheet" type="text/css">
-    <link id="app-style" href="{{ ubold_asset('css/app.min.css') }}" rel="stylesheet" type="text/css">
-    @vite(['resources/css/dashboard-ubold-bridge.css', 'resources/js/dashboard.js'])
+    <link rel="shortcut icon" href="{{ dashboard_asset('images/favicon.ico') }}">
+    @vite(['resources/js/dashboard-theme.js'])
+    <link href="{{ dashboard_asset('css/vendors.min.css') }}" rel="stylesheet" type="text/css">
+    <link id="app-style" href="{{ dashboard_asset('css/app.min.css') }}" rel="stylesheet" type="text/css">
+    @vite(['resources/css/dashboard-bridge.css', 'resources/js/dashboard.js'])
     @stack('head')
 </head>
 <body>
     <div class="wrapper">
-        @include('partials.dashboard.ubold.topbar')
-        @include('partials.dashboard.ubold.sidenav')
+        @include('partials.dashboard.chrome.topbar')
+        @include('partials.dashboard.chrome.sidenav')
 
         <div class="content-page">
             <div class="container-fluid">
                 @include('partials.dashboard.impersonation-banner')
-                @include('partials.dashboard.ubold.page-title')
+                @include('partials.dashboard.chrome.page-title')
                 @yield('content')
             </div>
         </div>
@@ -41,11 +41,10 @@
 
     @include('partials.dashboard.admin-action-confirm-modal')
 
-    @include('partials.dashboard.ubold.theme-offcanvas')
     @include('partials.dashboard.toasts')
 
-    <script src="{{ ubold_asset('js/vendors.min.js') }}"></script>
-    <script src="{{ ubold_asset('js/app.js') }}"></script>
+    <script src="{{ dashboard_asset('js/vendors.min.js') }}"></script>
+    <script src="{{ dashboard_asset('js/app.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

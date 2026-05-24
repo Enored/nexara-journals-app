@@ -86,11 +86,11 @@ function submission_workspace_route(\App\Models\Submission $submission, ?\App\Mo
 }
 
 /**
- * Public URL for UBold dashboard static assets (copied from use_this_UI_for_dashboards/dist/assets).
+ * Public URL for admin dashboard static assets (theme CSS/JS, icons, logos).
  */
-function ubold_asset(string $path = ''): string
+function dashboard_asset(string $path = ''): string
 {
     $path = ltrim($path, '/');
 
-    return asset('vendor/ubold/'.$path);
+    return asset('assets/dashboard/'.$path);
 }
