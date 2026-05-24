@@ -12,12 +12,12 @@
 <div class="sidenav-menu">
     <a href="{{ platform_route('dashboard') }}" class="logo">
         <span class="logo logo-light">
-            <span class="logo-lg"><img src="{{ dashboard_asset('images/logo.png') }}" alt="{{ config('app.name') }}"></span>
-            <span class="logo-sm"><img src="{{ dashboard_asset('images/logo-sm.png') }}" alt="{{ config('app.name') }}"></span>
+            <span class="logo-lg"><img src="{{ dashboard_asset('images/logo.png') }}" alt="{{ platform_name() }}"></span>
+            <span class="logo-sm"><img src="{{ dashboard_asset('images/logo-sm.png') }}" alt="{{ platform_name() }}"></span>
         </span>
         <span class="logo logo-dark">
-            <span class="logo-lg"><img src="{{ dashboard_asset('images/logo-black.png') }}" alt="{{ config('app.name') }}"></span>
-            <span class="logo-sm"><img src="{{ dashboard_asset('images/logo-sm.png') }}" alt="{{ config('app.name') }}"></span>
+            <span class="logo-lg"><img src="{{ dashboard_asset('images/logo-black.png') }}" alt="{{ platform_name() }}"></span>
+            <span class="logo-sm"><img src="{{ dashboard_asset('images/logo-sm.png') }}" alt="{{ platform_name() }}"></span>
         </span>
     </a>
 

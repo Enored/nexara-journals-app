@@ -15,7 +15,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Dashboard') — {{ config('app.name') }}</title>
+    <title>@yield('title', 'Dashboard') — {{ platform_name() }}</title>
     <link rel="shortcut icon" href="{{ dashboard_asset('images/favicon.ico') }}">
     @vite(['resources/js/dashboard-theme.js'])
     <link href="{{ dashboard_asset('css/vendors.min.css') }}" rel="stylesheet" type="text/css">

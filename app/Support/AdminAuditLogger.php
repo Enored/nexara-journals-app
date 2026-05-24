@@ -18,6 +18,8 @@ final class AdminAuditLogger
 
     public const USER_IMPORTED = 'user.imported';
 
+    public const PLATFORM_SETTINGS_UPDATED = 'platform.settings.updated';
+
     /**
      * @param  array<string, mixed>  $metadata
      */

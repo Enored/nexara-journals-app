@@ -86,6 +86,20 @@ function submission_workspace_route(\App\Models\Submission $submission, ?\App\Mo
 }
 
 /**
+ * Display name for the platform (admin-configurable, falls back to APP_NAME).
+ */
+function platform_name(): string
+{
+    try {
+        $name = \App\Models\PlatformSetting::current()->platform_name;
+
+        return $name !== '' ? $name : (string) config('app.name');
+    } catch (\Throwable) {
+        return (string) config('app.name');
+    }
+}
+
+/**
  * Public URL for admin dashboard static assets (theme CSS/JS, icons, logos).
  */
 function dashboard_asset(string $path = ''): string

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\BlogManageController;
+use App\Http\Controllers\Admin\PlatformSettingsController;
 use App\Http\Controllers\Admin\JournalEditionManageController;
 use App\Http\Controllers\Admin\JournalManageController;
 use App\Http\Controllers\Admin\UserManageController;
@@ -130,6 +131,9 @@ Route::middleware('auth')->group(function () {
         Route::get('blogs/{blog}/edit', [BlogManageController::class, 'edit'])->name('blogs.edit');
         Route::put('blogs/{blog}', [BlogManageController::class, 'update'])->name('blogs.update');
         Route::delete('blogs/{blog}', [BlogManageController::class, 'destroy'])->name('blogs.destroy');
+
+        Route::get('settings', [PlatformSettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('settings', [PlatformSettingsController::class, 'update'])->name('settings.update');
     });
 
     Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
