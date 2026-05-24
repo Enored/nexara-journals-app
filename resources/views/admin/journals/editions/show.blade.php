@@ -1,166 +1,195 @@
 @extends('layouts.dashboard', ['activeNav' => 'admin-journals'])
 
 @php
-    use App\Enums\EditionStatus;
     use App\Enums\SubmissionStatus;
     $slottedCount = $articles->where('status', SubmissionStatus::Accepted)->count();
     $liveCount = $articles->where('status', SubmissionStatus::Published)->count();
+    $editionSubtitle = $journal->name.' · Vol. '.$edition->volume->number.', No. '.$edition->issue;
+    $editModalUrl = platform_route('admin.journals.editions.edit', [$journal, $edition]).'?modal=1';
+    $addArticleModalUrl = platform_route('admin.journals.editions.articles.add-form', [$journal, $edition]).'?modal=1';
+    $publishModalUrl = platform_route('admin.journals.editions.publish-form', [$journal, $edition]).'?modal=1';
 @endphp
 
 @section('title', $edition->label())
 @section('pageTitle', $edition->label())
 @section('pageDescription', $journal->name)
 
+@section('breadcrumb')
+    <x-admin.breadcrumb :items="[
+        ['label' => 'Journals', 'url' => platform_route('admin.journals.index')],
+        ['label' => $journal->name, 'url' => platform_route('admin.journals.editions.index', $journal)],
+        ['label' => 'Vol. '.$edition->volume->number.', No. '.$edition->issue, 'aria' => true],
+    ]" />
+@endsection
+
 @section('content')
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-            <x-dash.link :href="platform_route('admin.journals.index')">Journals</x-dash.link>
-            <span class="text-slate-300">/</span>
-            <x-dash.link :href="platform_route('admin.journals.editions.index', $journal)">{{ $journal->name }}</x-dash.link>
-            <span class="text-slate-300">/</span>
-            <span class="font-medium text-slate-900">Vol. {{ $edition->volume }}, No. {{ $edition->issue }}</span>
+    <div class="card mb-4">
+        <div class="card-header border-light d-flex flex-wrap align-items-center gap-2">
+            <h5 class="card-title mb-0">Issue details</h5>
+            <div class="d-flex flex-wrap align-items-center gap-2 ms-lg-auto">
+                @include('admin.journals.editions.partials.show-actions', compact(
+                    'journal',
+                    'edition',
+                    'editionSubtitle',
+                    'editModalUrl',
+                    'publishModalUrl',
+                    'slottedCount',
+                ))
+            </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            @include('partials.edition-status', ['status' => $edition->status])
-        </div>
-    </div>
-
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        @include('partials.dashboard.stat-card', ['label' => 'Status', 'value' => $edition->isPublished() ? 'Published' : 'Draft', 'accent' => $edition->isPublished() ? 'violet' : 'amber'])
-        @include('partials.dashboard.stat-card', ['label' => 'Slotted articles', 'value' => $slottedCount, 'hint' => 'Accepted, not yet public', 'accent' => 'sky'])
-        @include('partials.dashboard.stat-card', ['label' => 'Live articles', 'value' => $liveCount, 'accent' => 'violet'])
-        @include('partials.dashboard.stat-card', ['label' => 'Planned date', 'value' => $edition->published_at?->format('M j, Y') ?? '—'])
-    </div>
-
-    @if ($edition->isDraft())
-        <section class="dash-card mt-6 border-teal-200 bg-teal-50/40 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Publish issue</h2>
-            <p class="mt-1 text-sm text-slate-600">Like scheduling a release: build the issue with accepted articles below, then publish to make them visible on the public journal site.</p>
-            <form method="POST" action="{{ platform_route('admin.journals.editions.publish', [$journal, $edition]) }}" class="mt-4 flex flex-wrap items-end gap-4">
-                @csrf
+        <div class="card-body">
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
                 <div>
-                    <label for="publish-date" class="dash-field-label">Release date (optional)</label>
-                    <input type="date" id="publish-date" name="published_at" value="{{ old('published_at', now()->toDateString()) }}" class="dash-input mt-1">
+                    <p class="text-muted text-uppercase fs-xxs mb-1">Volume / issue</p>
+                    <p class="fw-semibold mb-0">Vol. {{ $edition->volume->number }}, No. {{ $edition->issue }}</p>
                 </div>
-                <x-dash.button type="submit" class="!bg-emerald-700 hover:!bg-emerald-800" :disabled="$slottedCount === 0">Publish issue</x-dash.button>
-            </form>
-            @if ($slottedCount === 0)
-                <p class="mt-2 text-sm text-amber-800">Add at least one accepted article before publishing.</p>
-            @endif
-        </section>
-    @else
-        <section class="dash-card mt-6 border-amber-200 bg-amber-50/50 p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Issue is live</h2>
-            <p class="mt-1 text-sm text-slate-600">This issue is visible on the journal site. Unpublish to pull articles back to accepted (slotted) status while keeping them in this issue.</p>
-            <form method="POST" action="{{ platform_route('admin.journals.editions.unpublish', [$journal, $edition]) }}" class="mt-4" onsubmit="return confirm('Unpublish this issue? Live articles will return to accepted status.');">
-                @csrf
-                <x-dash.button type="submit" variant="secondary">Unpublish issue</x-dash.button>
-            </form>
-        </section>
-    @endif
+                <div>
+                    <p class="text-muted text-uppercase fs-xxs mb-1">Title</p>
+                    <p class="fw-semibold mb-0">{{ $edition->title ?: '—' }}</p>
+                </div>
+                <div>
+                    <p class="text-muted text-uppercase fs-xxs mb-1">Status</p>
+                    <div>@include('partials.edition-status', ['status' => $edition->status])</div>
+                </div>
+                <div>
+                    <p class="text-muted text-uppercase fs-xxs mb-1">Published date</p>
+                    <p class="fw-semibold mb-0">{{ $edition->isPublished() ? $edition->published_at?->format('M j, Y') : '—' }}</p>
+                </div>
+                <div>
+                    <p class="text-muted text-uppercase fs-xxs mb-1">Slotted articles</p>
+                    <p class="fw-semibold mb-0">{{ $slottedCount }}</p>
+                    <p class="text-muted fs-xs mb-0">Accepted, not yet public</p>
+                </div>
+                <div>
+                    <p class="text-muted text-uppercase fs-xxs mb-1">Live articles</p>
+                    <p class="fw-semibold mb-0">{{ $liveCount }}</p>
+                </div>
+            </div>
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-3">
-        <div class="space-y-6 lg:col-span-2">
-            <x-dash.table>
-                <x-slot:header>
-                    <tr>
-                        <th>Title</th>
-                        <th>Author</th>
-                        <th>Status</th>
-                        <th class="text-right">Actions</th>
-                    </tr>
-                </x-slot:header>
-                <x-slot:body>
-                    @forelse ($articles as $article)
-                        <tr>
-                            <td class="max-w-xs font-medium text-slate-900">{{ Str::limit($article->title, 56) }}</td>
-                            <td class="text-slate-600">{{ $article->author->name }}</td>
-                            <td>@include('partials.submission-status', ['status' => $article->status])</td>
-                            <td class="whitespace-nowrap text-right text-sm">
-                                @if ($edition->isDraft() && $article->status === SubmissionStatus::Accepted)
-                                    <form method="POST" action="{{ platform_route('admin.journals.editions.articles.remove', [$journal, $edition, $article]) }}" class="inline" onsubmit="return confirm('Remove this article from the issue?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="font-medium text-slate-600 hover:underline">Remove</button>
-                                    </form>
-                                @else
-                                    <span class="text-slate-400">—</span>
-                                @endif
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="!p-0">
-                                <x-dash.empty title="No articles in this issue" description="Add accepted manuscripts below before publishing." />
-                            </td>
-                        </tr>
-                    @endforelse
-                </x-slot:body>
-            </x-dash.table>
-        </div>
-
-        <div class="space-y-6">
             @if ($edition->isDraft())
-                <section class="dash-card p-6">
-                    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Add article</h2>
-                    <p class="mt-1 text-sm text-slate-600">Only <strong>accepted</strong> manuscripts not already in another issue.</p>
-                    @if ($availableToAdd->isEmpty())
-                        <p class="mt-4 text-sm text-slate-500">No accepted manuscripts available to add.</p>
-                    @else
-                        <form method="POST" action="{{ platform_route('admin.journals.editions.articles.assign', [$journal, $edition]) }}" class="mt-4 space-y-3">
-                            @csrf
-                            <div>
-                                <label for="add-submission" class="dash-field-label">Manuscript</label>
-                                <select id="add-submission" name="submission_id" required class="dash-select mt-1 w-full">
-                                    <option value="">Select…</option>
-                                    @foreach ($availableToAdd as $s)
-                                        <option value="{{ $s->id }}">{{ Str::limit($s->title, 48) }} — {{ $s->author->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <x-dash.button type="submit" class="w-full">Add to issue</x-dash.button>
-                        </form>
-                    @endif
-                </section>
-            @endif
-
-            <section class="dash-card p-6">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Issue details</h2>
-                <form method="POST" action="{{ platform_route('admin.journals.editions.update', [$journal, $edition]) }}" class="mt-4 space-y-3">
-                    @csrf
-                    @method('PUT')
-                    <div class="grid gap-3 sm:grid-cols-2">
-                        <x-dash.input name="volume" type="number" label="Volume" :value="old('volume', $edition->volume)" min="1" required />
-                        <x-dash.input name="issue" type="number" label="Issue" :value="old('issue', $edition->issue)" min="1" required />
-                    </div>
-                    <x-dash.input name="title" label="Title (optional)" :value="old('title', $edition->title)" />
-                    <x-dash.input name="planned_date" type="date" label="Planned / published date" :value="old('planned_date', $edition->published_at?->format('Y-m-d'))" />
-                    <x-dash.button type="submit" variant="secondary" class="w-full">Save details</x-dash.button>
-                </form>
-            </section>
-
-            <section class="dash-card mt-6 border-rose-200 bg-rose-50/40 p-6">
-                <h2 class="text-sm font-semibold text-rose-900">Delete issue</h2>
-                <p class="mt-1 text-sm text-slate-600">
-                    Permanently remove Vol. {{ $edition->volume }}, No. {{ $edition->issue }}.
-                    @if ($articles->isNotEmpty())
-                        All {{ $articles->count() }} article(s) will be unlinked from this issue and returned to <strong>accepted</strong> status.
-                        @if ($edition->isPublished())
-                            Live articles will be taken off the public journal site.
-                        @endif
+                <p class="text-muted mb-0 mt-3 pt-3 border-top border-light">
+                    Slot accepted manuscripts below, then publish to make them visible on the journal site.
+                    @if ($slottedCount === 0)
+                        <span class="d-block mt-1">Add at least one article before publishing.</span>
                     @endif
                 </p>
-                <form
-                    method="POST"
-                    action="{{ platform_route('admin.journals.editions.destroy', [$journal, $edition]) }}"
-                    class="mt-4"
-                    onsubmit="return confirm('Delete this issue permanently? Articles will stay accepted but no longer belong to any issue.');"
-                >
-                    @csrf
-                    @method('DELETE')
-                    <x-dash.button type="submit" variant="danger">Delete issue</x-dash.button>
-                </form>
-            </section>
+            @else
+                <p class="text-muted mb-0 mt-3 pt-3 border-top border-light">
+                    This issue is live on the journal site. You can add more accepted articles — they go public immediately. Use <strong>Unpublish</strong> to pull all articles back to accepted (slotted) status.
+                </p>
+            @endif
         </div>
     </div>
+
+    <x-dash.list-card>
+        <x-slot:filterEnd>
+            <x-dash.button
+                type="button"
+                data-edition-add-article-open
+                data-url="{{ $addArticleModalUrl }}"
+                data-subtitle="{{ $editionSubtitle }}"
+            >
+                <i data-lucide="plus" class="fs-sm me-1"></i>
+                Add article
+            </x-dash.button>
+        </x-slot:filterEnd>
+        <x-slot:header>
+            <tr class="text-uppercase fs-xxs">
+                <th>Title</th>
+                <th>Author</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </x-slot:header>
+        <x-slot:body>
+            @forelse ($articles as $article)
+                <tr>
+                    <td class="fw-medium" style="max-width: 18rem;">{{ Str::limit($article->title, 56) }}</td>
+                    <td class="text-muted">{{ $article->author->name }}</td>
+                    <td>@include('partials.submission-status', ['status' => $article->status])</td>
+                    <td class="text-end text-nowrap">
+                        @if ($edition->isDraft() && $article->status === SubmissionStatus::Accepted)
+                            <form method="POST" action="{{ platform_route('admin.journals.editions.articles.remove', [$journal, $edition, $article]) }}" class="d-inline" onsubmit="return confirm('Remove this article from the issue?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-link btn-sm link-secondary p-0">Remove</button>
+                            </form>
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4" class="p-0">
+                        <x-dash.empty
+                            title="No articles in this issue"
+                            :description="$edition->isDraft()
+                                ? 'Use Add article to slot accepted manuscripts before publishing.'
+                                : 'Use Add article to publish accepted manuscripts into this live issue.'"
+                        >
+                            <x-dash.button
+                                type="button"
+                                data-edition-add-article-open
+                                data-url="{{ $addArticleModalUrl }}"
+                                data-subtitle="{{ $editionSubtitle }}"
+                            >
+                                Add article
+                            </x-dash.button>
+                        </x-dash.empty>
+                    </td>
+                </tr>
+            @endforelse
+        </x-slot:body>
+    </x-dash.list-card>
+
+    <form
+        method="POST"
+        action="{{ platform_route('admin.journals.editions.destroy', [$journal, $edition]) }}"
+        id="edition-delete-form"
+        class="d-none"
+    >
+        @csrf
+        @method('DELETE')
+    </form>
 @endsection
+
+@push('modals')
+    <x-admin.confirm-modal
+        id="edition-delete-modal"
+        title="Delete this issue?"
+        confirm-label="Delete issue"
+        form-id="edition-delete-form"
+    >
+        <p class="mb-2">This permanently removes <strong>Vol. {{ $edition->volume->number }}, No. {{ $edition->issue }}</strong> from {{ $journal->name }}.</p>
+        @if ($articles->isNotEmpty())
+            <p class="mb-0 text-muted">
+                All {{ $articles->count() }} article(s) will be unlinked and returned to <strong>accepted</strong> status.
+                @if ($edition->isPublished())
+                    Live articles will be removed from the public journal site.
+                @endif
+            </p>
+        @else
+            <p class="mb-0 text-muted">This issue has no articles. The issue record will be removed only.</p>
+        @endif
+    </x-admin.confirm-modal>
+
+    <x-admin.ajax-modal
+        id="edition-edit-modal"
+        title="Issue details"
+        submit-form="edition-edit-form"
+        submit-label="Save details"
+    />
+    <x-admin.ajax-modal
+        id="edition-add-article-modal"
+        title="Add article"
+        submit-form="edition-add-article-form"
+        submit-label="Add to issue"
+    />
+    <x-admin.ajax-modal
+        id="edition-publish-modal"
+        title="Publish issue"
+        submit-form="edition-publish-form"
+        submit-label="Publish issue"
+    />
+@endpush

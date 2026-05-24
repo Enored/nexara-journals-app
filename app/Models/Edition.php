@@ -15,7 +15,7 @@ class Edition extends Model
 
     protected $fillable = [
         'journal_id',
-        'volume',
+        'volume_id',
         'issue',
         'title',
         'status',
@@ -60,7 +60,8 @@ class Edition extends Model
 
     public function label(): string
     {
-        $base = 'Vol. '.$this->volume.', No. '.$this->issue;
+        $volumeNumber = $this->volume?->number ?? '?';
+        $base = 'Vol. '.$volumeNumber.', No. '.$this->issue;
 
         return $this->title ? $base.' — '.$this->title : $base;
     }
@@ -68,6 +69,11 @@ class Edition extends Model
     public function journal(): BelongsTo
     {
         return $this->belongsTo(Journal::class);
+    }
+
+    public function volume(): BelongsTo
+    {
+        return $this->belongsTo(Volume::class);
     }
 
     public function submissions(): HasMany

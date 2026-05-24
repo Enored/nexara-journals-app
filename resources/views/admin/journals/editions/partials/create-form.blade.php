@@ -2,38 +2,38 @@
     method="POST"
     action="{{ platform_route('admin.journals.editions.store', $journal) }}"
     id="edition-create-form"
-    class="space-y-4"
 >
     @csrf
-    <div class="grid gap-4 sm:grid-cols-2">
-        <div class="dash-field">
-            <label for="edition-volume" class="dash-field-label">Volume</label>
-            <input id="edition-volume" type="number" name="volume" value="{{ old('volume', 1) }}" min="1" max="65535" required class="dash-input @error('volume') ring-2 ring-rose-200 @enderror">
-            @error('volume')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
+    @if ($volumes->isEmpty())
+        <div class="alert alert-warning mb-0">
+            Create a <strong>volume</strong> first using <strong>New volume</strong> above, then return here to add an issue.
         </div>
-        <div class="dash-field">
-            <label for="edition-issue" class="dash-field-label">Issue</label>
-            <input id="edition-issue" type="number" name="issue" value="{{ old('issue', 1) }}" min="1" max="65535" required class="dash-input @error('issue') ring-2 ring-rose-200 @enderror">
-            @error('issue')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
+        <div data-ajax-modal-block-submit></div>
+    @else
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label for="edition-volume-id" class="form-label">Volume</label>
+                <select id="edition-volume-id" name="volume_id" required class="form-select @error('volume_id') is-invalid @enderror">
+                    <option value="">Select volume…</option>
+                    @foreach ($volumes as $volume)
+                        <option value="{{ $volume->id }}" @selected(old('volume_id') === $volume->id)>
+                            Vol. {{ $volume->number }}@if ($volume->title) — {{ $volume->title }}@endif
+                        </option>
+                    @endforeach
+                </select>
+                @error('volume_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+            <div class="col-sm-6">
+                <label for="edition-issue" class="form-label">Issue number</label>
+                <input id="edition-issue" type="number" name="issue" value="{{ old('issue', 1) }}" min="1" max="65535" required class="form-control @error('issue') is-invalid @enderror">
+                @error('issue')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
         </div>
-    </div>
-    <div class="dash-field">
-        <label for="edition-title" class="dash-field-label">Issue title (optional)</label>
-        <input id="edition-title" type="text" name="title" value="{{ old('title') }}" class="dash-input @error('title') ring-2 ring-rose-200 @enderror">
-        @error('title')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
-    </div>
-    <div class="dash-field">
-        <label for="edition-planned-date" class="dash-field-label">Planned release date (optional)</label>
-        <input id="edition-planned-date" type="date" name="planned_date" value="{{ old('planned_date') }}" class="dash-input @error('planned_date') ring-2 ring-rose-200 @enderror">
-        @error('planned_date')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
-    </div>
-    <div class="dash-field">
-        <label for="edition-visibility" class="dash-field-label">Visibility</label>
-        <select id="edition-visibility" name="visibility" required class="dash-select @error('visibility') ring-2 ring-rose-200 @enderror">
-            <option value="draft" @selected(old('visibility', 'draft') === 'draft')>Draft — not on journal site yet (recommended)</option>
-            <option value="published" @selected(old('visibility') === 'published')>Published — mark issue live (add articles next)</option>
-        </select>
-        <p class="mt-1 text-xs text-slate-500">Draft issues let you slot accepted articles first, then publish the whole issue when ready.</p>
-        @error('visibility')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
-    </div>
+        <div class="mb-0 mt-3">
+            <label for="edition-title" class="form-label">Issue title (optional)</label>
+            <input id="edition-title" type="text" name="title" value="{{ old('title') }}" class="form-control @error('title') is-invalid @enderror">
+            @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+        <p class="text-muted mb-0 mt-3 fs-sm">Issues are created as drafts. Add articles, then use <strong>Publish issue</strong> when ready.</p>
+    @endif
 </form>

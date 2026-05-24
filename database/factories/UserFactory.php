@@ -47,4 +47,18 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
+        ]);
+    }
+
+    public function platformAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_platform_admin' => true,
+        ]);
+    }
 }

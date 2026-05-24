@@ -1,1 +1,1 @@
-<span {{ $attributes->merge(['class' => 'dash-badge']) }}>{{ $slot }}</span>
+<span {{ $attributes->merge(['class' => 'badge badge-soft-secondary']) }}>{{ $slot }}</span>

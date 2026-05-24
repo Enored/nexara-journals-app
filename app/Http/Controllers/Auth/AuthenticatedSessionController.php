@@ -26,6 +26,12 @@ class AuthenticatedSessionController extends Controller
             return back()->withErrors(['email' => __('These credentials do not match our records.')])->onlyInput('email');
         }
 
+        if (! $request->user()->is_active) {
+            Auth::logout();
+
+            return back()->withErrors(['email' => __('This account has been suspended. Contact support for help.')])->onlyInput('email');
+        }
+
         $request->session()->regenerate();
 
         return redirect()->intended(platform_route('dashboard'));

@@ -1,7 +1,6 @@
 <form
     method="POST"
     action="{{ platform_route('admin.users.update-roles', $user) }}"
-    class="space-y-4"
     id="user-roles-form"
 >
     @csrf
@@ -11,38 +10,44 @@
         <input type="hidden" name="return[{{ $key }}]" value="{{ $value }}">
     @endforeach
 
-    <p class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+    <div class="alert alert-light border mb-3">
         Every account can submit manuscripts as an <strong>author</strong>. Assign <strong>reviewer</strong>, <strong>editor</strong>, or <strong>journal admin</strong> per journal below.
-    </p>
+    </div>
 
     @forelse ($journals as $journal)
         @php
             $row = $existing->get($journal->id, collect());
         @endphp
-        <fieldset class="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
-            <legend class="px-1 text-sm font-semibold text-slate-900">
-                {{ $journal->name }}
-                <span class="font-normal text-slate-500">({{ $journal->subdomain }})</span>
-            </legend>
-            <div class="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-                @foreach ($roles as $role)
-                    @php
-                        $checked = $row->contains(fn ($jur) => $jur->role === $role);
-                    @endphp
-                    <label class="flex items-center gap-2 text-sm text-slate-800">
-                        <input
-                            type="checkbox"
-                            name="roles[{{ $journal->id }}][{{ $role->value }}]"
-                            value="1"
-                            @checked(old("roles.{$journal->id}.{$role->value}", $checked))
-                            class="dash-checkbox"
-                        >
-                        {{ $role->label() }}
-                    </label>
-                @endforeach
+        <fieldset class="card border mb-3">
+            <div class="card-header border-light py-2">
+                <legend class="float-none w-auto p-0 mb-0 fs-base fw-semibold">
+                    {{ $journal->name }}
+                    <span class="text-muted fw-normal">({{ $journal->subdomain }})</span>
+                </legend>
+            </div>
+            <div class="card-body pt-2">
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach ($roles as $role)
+                        @php
+                            $checked = $row->contains(fn ($jur) => $jur->role === $role);
+                            $inputId = "role-{$journal->id}-{$role->value}";
+                        @endphp
+                        <div class="form-check">
+                            <input
+                                type="checkbox"
+                                name="roles[{{ $journal->id }}][{{ $role->value }}]"
+                                value="1"
+                                id="{{ $inputId }}"
+                                class="form-check-input"
+                                @checked(old("roles.{$journal->id}.{$role->value}", $checked))
+                            >
+                            <label class="form-check-label" for="{{ $inputId }}">{{ $role->label() }}</label>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </fieldset>
     @empty
-        <p class="text-sm text-slate-600">No journals exist yet. Create a journal before assigning roles.</p>
+        <p class="text-muted mb-0">No journals exist yet. Create a journal before assigning roles.</p>
     @endforelse
 </form>

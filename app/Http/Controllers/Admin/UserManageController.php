@@ -3,32 +3,114 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\JournalRole;
+use App\Http\Controllers\Concerns\ReturnsDashListPartial;
 use App\Http\Controllers\Controller;
 use App\Models\Journal;
-use App\Models\JournalUserRole;
 use App\Models\User;
+use App\Support\AdminAuditLogger;
+use App\Support\AdminUserAccountService;
+use App\Support\AdminUserCsvExporter;
+use App\Support\AdminUserCsvImporter;
 use App\Support\AdminUserIndexFilters;
+use App\Support\AdminUserRoleSynchronizer;
+use App\Support\Impersonation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UserManageController extends Controller
 {
+    use ReturnsDashListPartial;
+
     public function index(Request $request): View
     {
         $filters = AdminUserIndexFilters::fromRequest($request);
         $journals = Journal::query()->orderBy('name')->get();
         $users = AdminUserIndexFilters::paginate($filters);
 
-        return view('admin.users.index', [
+        $data = [
             'users' => $users,
             'filters' => $filters,
             'journals' => $journals,
             'roles' => JournalRole::assignable(),
             'activeFilterPills' => AdminUserIndexFilters::activeFilterPills($filters, $journals),
             'hasActiveFilters' => AdminUserIndexFilters::hasActiveFilters($filters),
+        ];
+
+        return $this->dashListResponse(
+            $request,
+            'admin.users.partials.list',
+            'admin.users.index',
+            $data,
+        );
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $filters = AdminUserIndexFilters::fromRequest($request);
+        $users = AdminUserIndexFilters::results($filters);
+        $filename = 'users-'.now()->format('Y-m-d').'.csv';
+
+        return response()->streamDownload(
+            fn () => AdminUserCsvExporter::stream($users),
+            $filename,
+            ['Content-Type' => 'text/csv; charset=UTF-8'],
+        );
+    }
+
+    public function import(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
         ]);
+
+        $result = (new AdminUserCsvImporter)->import($request->file('file'), $request->user());
+
+        $redirect = redirect()->route('admin.users.index', AdminUserIndexFilters::returnQueryFromRequest($request));
+
+        if ($result->hasErrors()) {
+            return $redirect
+                ->with('error', $result->summaryMessage())
+                ->with('import_errors', $result->errors);
+        }
+
+        return $redirect->with('status', $result->summaryMessage());
+    }
+
+    public function suspend(Request $request, User $user): RedirectResponse
+    {
+        AdminUserAccountService::suspend($request->user(), $user);
+
+        return redirect()
+            ->route('admin.users.index', AdminUserIndexFilters::returnQueryFromRequest($request))
+            ->with('status', $user->fresh()->name.' has been suspended.');
+    }
+
+    public function unsuspend(Request $request, User $user): RedirectResponse
+    {
+        AdminUserAccountService::unsuspend($request->user(), $user);
+
+        return redirect()
+            ->route('admin.users.index', AdminUserIndexFilters::returnQueryFromRequest($request))
+            ->with('status', $user->fresh()->name.' has been reactivated.');
+    }
+
+    public function impersonate(Request $request, User $user): RedirectResponse
+    {
+        $admin = $request->user();
+        Impersonation::start($admin, $user);
+
+        AdminAuditLogger::log(
+            AdminAuditLogger::USER_IMPERSONATION_STARTED,
+            $admin,
+            $user,
+        );
+
+        return redirect()
+            ->route('dashboard')
+            ->with('status', 'You are now viewing the platform as '.$user->name.'.');
     }
 
     public function editRoles(Request $request, User $user): View|RedirectResponse
@@ -45,23 +127,7 @@ class UserManageController extends Controller
 
     public function updateRoles(Request $request, User $user): RedirectResponse
     {
-        JournalUserRole::query()->where('user_id', $user->id)->delete();
-
-        $rolesInput = $request->input('roles', []);
-
-        foreach (Journal::query()->cursor() as $journal) {
-            $flags = $rolesInput[$journal->id] ?? [];
-            foreach (JournalRole::assignable() as $role) {
-                if (! empty($flags[$role->value])) {
-                    JournalUserRole::query()->create([
-                        'user_id' => $user->id,
-                        'journal_id' => $journal->id,
-                        'role' => $role,
-                        'assigned_by' => $request->user()->id,
-                    ]);
-                }
-            }
-        }
+        AdminUserRoleSynchronizer::sync($user, $request->input('roles', []), $request->user()->id);
 
         return redirect()
             ->route('admin.users.index', AdminUserIndexFilters::returnQueryFromRequest($request))

@@ -8,12 +8,19 @@ use App\Http\Controllers\Controller;
 use App\Models\Journal;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class EditionController extends Controller
 {
     public function index(Journal $journal): JsonResponse
     {
-        $editions = $journal->editions()->orderByDesc('volume')->orderByDesc('issue')->get();
+        $editions = $journal->editions()
+            ->with('volume')
+            ->join('volumes', 'editions.volume_id', '=', 'volumes.id')
+            ->select('editions.*')
+            ->orderByDesc('volumes.number')
+            ->orderByDesc('editions.issue')
+            ->get();
 
         return response()->json($editions);
     }
@@ -26,7 +33,11 @@ class EditionController extends Controller
         }
 
         $data = $request->validate([
-            'volume' => ['required', 'integer', 'min:1', 'max:65535'],
+            'volume_id' => [
+                'required',
+                'uuid',
+                Rule::exists('volumes', 'id')->where(fn ($q) => $q->where('journal_id', $journal->id)),
+            ],
             'issue' => ['required', 'integer', 'min:1', 'max:65535'],
             'title' => ['nullable', 'string', 'max:255'],
             'published_at' => ['nullable', 'date'],
@@ -34,7 +45,7 @@ class EditionController extends Controller
         ]);
 
         $edition = $journal->editions()->create([
-            'volume' => $data['volume'],
+            'volume_id' => $data['volume_id'],
             'issue' => $data['issue'],
             'title' => $data['title'] ?? null,
             'published_at' => $data['published_at'] ?? null,
@@ -43,6 +54,6 @@ class EditionController extends Controller
                 : EditionStatus::Draft,
         ]);
 
-        return response()->json($edition, 201);
+        return response()->json($edition->load('volume'), 201);
     }
 }

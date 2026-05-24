@@ -18,7 +18,7 @@ trait LoadsSubmissionWorkspace
         $submission->load([
             'journal',
             'author',
-            'edition',
+            'edition.volume',
             'files.uploadedBy',
             'reviewAssignments' => fn ($q) => $q->orderByDesc('invited_at'),
             'reviewAssignments.reviewer',
@@ -42,9 +42,12 @@ trait LoadsSubmissionWorkspace
 
             if (auth()->user()?->can('publish', $submission)) {
                 $editionsForPublish = $submission->journal->editions()
+                    ->with('volume')
                     ->where('status', EditionStatus::Draft)
-                    ->orderByDesc('volume')
-                    ->orderByDesc('issue')
+                    ->join('volumes', 'editions.volume_id', '=', 'volumes.id')
+                    ->select('editions.*')
+                    ->orderByDesc('volumes.number')
+                    ->orderByDesc('editions.issue')
                     ->get();
             }
         }

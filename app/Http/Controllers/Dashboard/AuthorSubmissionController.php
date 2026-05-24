@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Enums\SubmissionStatus;
+use App\Http\Controllers\Concerns\ReturnsDashListPartial;
 use App\Http\Controllers\Controller;
 use App\Models\Journal;
 use App\Models\Submission;
@@ -12,6 +13,8 @@ use Illuminate\View\View;
 
 class AuthorSubmissionController extends Controller
 {
+    use ReturnsDashListPartial;
+
     public function __invoke(Request $request): View
     {
         $user = auth()->user();
@@ -38,7 +41,7 @@ class AuthorSubmissionController extends Controller
             'revision' => (clone $base)->where('status', SubmissionStatus::RevisionRequested)->count(),
         ];
 
-        return view('dashboard.author.submissions', [
+        $data = [
             'user' => $user,
             'submissions' => $submissions,
             'stats' => $stats,
@@ -47,6 +50,13 @@ class AuthorSubmissionController extends Controller
             'filters' => $filters,
             'activeFilterPills' => AuthorSubmissionIndexFilters::activeFilterPills($filters, $authorJournals),
             'hasActiveFilters' => AuthorSubmissionIndexFilters::hasActiveFilters($filters),
-        ]);
+        ];
+
+        return $this->dashListResponse(
+            $request,
+            'dashboard.author.partials.submissions-list',
+            'dashboard.author.submissions',
+            $data,
+        );
     }
 }

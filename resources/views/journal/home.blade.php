@@ -65,7 +65,7 @@
                         @php($edition = $manuscripts->first()->edition)
                         <div class="rounded-lg border border-slate-200 bg-white p-5">
                             <h3 class="text-base font-semibold text-slate-900">
-                                Vol. {{ $edition->volume }}, No. {{ $edition->issue }}
+                                Vol. {{ $edition->volume->number }}, No. {{ $edition->issue }}
                                 @if ($edition->title)
                                     <span class="font-normal text-slate-600">— {{ $edition->title }}</span>
                                 @endif

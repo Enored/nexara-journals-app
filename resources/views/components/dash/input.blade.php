@@ -11,15 +11,18 @@
     $resolvedValue = $value ?? old($name);
 @endphp
 
-<div class="dash-field">
+<div class="mb-3 {{ $attributes->get('class') }}">
     @if ($label)
-        <label for="{{ $fieldId }}" class="dash-field-label">{{ $label }}</label>
+        <label for="{{ $fieldId }}" class="form-label">{{ $label }}</label>
     @endif
     <input
         type="{{ $type }}"
         name="{{ $name }}"
         id="{{ $fieldId }}"
         @if (! in_array($type, ['file', 'checkbox', 'radio'], true)) value="{{ $resolvedValue }}" @endif
-        {{ $attributes->merge(['class' => 'dash-input']) }}
+        {{ $attributes->except('class')->merge(['class' => 'form-control'.($errors->has($name) ? ' is-invalid' : '')]) }}
     />
+    @error($name)
+        <div class="invalid-feedback d-block">{{ $message }}</div>
+    @enderror
 </div>

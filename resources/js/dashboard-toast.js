@@ -94,6 +94,10 @@ export function initDashToastsFromFlash() {
     }
 }
 
+export function initDashboardToasts() {
+    initDashToastsFromFlash();
+}
+
 if (typeof window !== 'undefined') {
     window.showDashToast = showDashToast;
 }

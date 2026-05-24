@@ -33,6 +33,11 @@ class Journal extends Model
         return $this->hasMany(Edition::class);
     }
 
+    public function volumes(): HasMany
+    {
+        return $this->hasMany(Volume::class);
+    }
+
     public function journalUserRoles(): HasMany
     {
         return $this->hasMany(JournalUserRole::class);

@@ -2,18 +2,20 @@
     'variant' => 'primary',
     'type' => 'button',
     'href' => null,
+    'disabled' => false,
 ])
 
 @php
     $class = match ($variant) {
-        'secondary' => 'dash-btn-secondary',
-        'danger' => 'dash-btn-danger',
-        default => 'dash-btn-primary',
+        'secondary' => 'btn btn-light',
+        'success' => 'btn btn-success',
+        'danger' => 'btn btn-danger',
+        default => 'btn btn-primary',
     };
 @endphp
 
 @if ($href)
-    <a href="{{ $href }}" {{ $attributes->merge(['class' => $class]) }}>{{ $slot }}</a>
+    <a href="{{ $href }}" @disabled($disabled) {{ $attributes->except('disabled')->merge(['class' => $class]) }}>{{ $slot }}</a>
 @else
-    <button type="{{ $type }}" {{ $attributes->merge(['class' => $class]) }}>{{ $slot }}</button>
+    <button type="{{ $type }}" @disabled($disabled) {{ $attributes->except('disabled')->merge(['class' => $class]) }}>{{ $slot }}</button>
 @endif

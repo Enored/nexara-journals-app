@@ -16,7 +16,7 @@ class PublicArticleController extends Controller
             abort(404);
         }
 
-        $submission->load(['author', 'edition', 'journal']);
+        $submission->load(['author', 'edition.volume', 'journal']);
 
         if ($submission->edition && $submission->edition->status !== EditionStatus::Published) {
             abort(404);

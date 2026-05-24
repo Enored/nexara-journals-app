@@ -84,3 +84,13 @@ function submission_workspace_route(\App\Models\Submission $submission, ?\App\Mo
 
     return \App\Support\SubmissionWorkspace::routeFor($user, $submission);
 }
+
+/**
+ * Public URL for UBold dashboard static assets (copied from use_this_UI_for_dashboards/dist/assets).
+ */
+function ubold_asset(string $path = ''): string
+{
+    $path = ltrim($path, '/');
+
+    return asset('vendor/ubold/'.$path);
+}

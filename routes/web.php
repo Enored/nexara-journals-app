@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\JournalEditionManageController;
 use App\Http\Controllers\Admin\JournalManageController;
 use App\Http\Controllers\Admin\UserManageController;
@@ -95,9 +96,15 @@ Route::middleware('auth')->group(function () {
         Route::get('journals/create', [JournalManageController::class, 'create'])->name('journals.create');
         Route::post('journals', [JournalManageController::class, 'store'])->name('journals.store');
         Route::get('journals/{journal}/editions', [JournalEditionManageController::class, 'index'])->name('journals.editions.index');
+        Route::get('journals/{journal}/volumes/create', [JournalEditionManageController::class, 'createVolume'])->name('journals.volumes.create');
+        Route::post('journals/{journal}/volumes', [JournalEditionManageController::class, 'storeVolume'])->name('journals.volumes.store');
+        Route::delete('journals/{journal}/volumes/{volume}', [JournalEditionManageController::class, 'destroyVolume'])->name('journals.volumes.destroy');
         Route::get('journals/{journal}/editions/create', [JournalEditionManageController::class, 'create'])->name('journals.editions.create');
         Route::post('journals/{journal}/editions', [JournalEditionManageController::class, 'store'])->name('journals.editions.store');
         Route::get('journals/{journal}/editions/{edition}', [JournalEditionManageController::class, 'show'])->name('journals.editions.show');
+        Route::get('journals/{journal}/editions/{edition}/edit', [JournalEditionManageController::class, 'edit'])->name('journals.editions.edit');
+        Route::get('journals/{journal}/editions/{edition}/publish', [JournalEditionManageController::class, 'publishForm'])->name('journals.editions.publish-form');
+        Route::get('journals/{journal}/editions/{edition}/articles/add', [JournalEditionManageController::class, 'addArticleForm'])->name('journals.editions.articles.add-form');
         Route::put('journals/{journal}/editions/{edition}', [JournalEditionManageController::class, 'update'])->name('journals.editions.update');
         Route::delete('journals/{journal}/editions/{edition}', [JournalEditionManageController::class, 'destroy'])->name('journals.editions.destroy');
         Route::post('journals/{journal}/editions/{edition}/publish', [JournalEditionManageController::class, 'publishIssue'])->name('journals.editions.publish');
@@ -107,8 +114,17 @@ Route::middleware('auth')->group(function () {
         Route::get('journals/{journal}/edit', [JournalManageController::class, 'edit'])->name('journals.edit');
         Route::put('journals/{journal}', [JournalManageController::class, 'update'])->name('journals.update');
 
+        Route::get('users/export', [UserManageController::class, 'export'])->name('users.export');
+        Route::post('users/import', [UserManageController::class, 'import'])->name('users.import');
         Route::get('users', [UserManageController::class, 'index'])->name('users.index');
+        Route::post('users/{user}/suspend', [UserManageController::class, 'suspend'])->name('users.suspend');
+        Route::post('users/{user}/unsuspend', [UserManageController::class, 'unsuspend'])->name('users.unsuspend');
+        Route::post('users/{user}/impersonate', [UserManageController::class, 'impersonate'])->name('users.impersonate');
         Route::get('users/{user}/roles', [UserManageController::class, 'editRoles'])->name('users.edit-roles');
         Route::put('users/{user}/roles', [UserManageController::class, 'updateRoles'])->name('users.update-roles');
+    });
+
+    Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
+        Route::post('impersonation/stop', [ImpersonationController::class, 'stop'])->name('impersonation.stop');
     });
 });
