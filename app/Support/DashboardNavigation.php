@@ -37,7 +37,8 @@ class DashboardNavigation
             ],
             'editor' => [
                 ['key' => 'editor-dashboard', 'label' => 'Dashboard', 'route' => platform_route('editor.dashboard'), 'icon' => 'layout-dashboard'],
-                ['key' => 'editor-pipeline', 'label' => 'Editorial pipeline', 'route' => platform_route('editor.pipeline'), 'icon' => 'git-branch'],
+                ['key' => 'editor-submissions', 'label' => 'Submissions', 'route' => platform_route('editor.submissions'), 'icon' => 'file-text'],
+                ['key' => 'editor-editions', 'label' => 'Issues & volumes', 'route' => platform_route('editor.journals.index'), 'icon' => 'library'],
             ],
             'admin' => [
                 ['key' => 'admin-dashboard', 'label' => 'Dashboard', 'route' => platform_route('admin.dashboard'), 'icon' => 'layout-dashboard'],
@@ -148,7 +149,7 @@ class DashboardNavigation
             return 'author';
         }
 
-        if (str_starts_with($activeNav, 'editor')) {
+        if (str_starts_with($activeNav, 'editor') || $activeNav === 'editor-editions') {
             return 'editor';
         }
 

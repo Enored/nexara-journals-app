@@ -18,7 +18,7 @@ class DashboardHubController extends Controller
 
         $editorJournals = $user->journalUserRoles()->where('role', JournalRole::Editor)->count();
         if ($editorJournals > 0) {
-            $sections[] = ['label' => 'Editor', 'description' => 'Submissions and peer review for your journals.', 'route' => platform_route('editor.pipeline'), 'tone' => 'teal'];
+            $sections[] = ['label' => 'Editor', 'description' => 'Submissions and peer review for your journals.', 'route' => platform_route('editor.submissions'), 'tone' => 'teal'];
         }
 
         $reviewerRoles = $user->journalUserRoles()->where('role', JournalRole::Reviewer)->count();

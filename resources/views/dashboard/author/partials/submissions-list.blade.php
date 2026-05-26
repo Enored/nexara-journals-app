@@ -4,6 +4,14 @@
     :paginator="$submissions"
     item-label="submissions"
 >
+    <x-slot:filterEnd>
+        @if ($submitJournals->isNotEmpty())
+            <x-dash.button data-bs-toggle="modal" data-bs-target="#manuscript-create-modal">
+                <i data-lucide="file-plus" class="fs-sm me-1"></i>
+                Create manuscript
+            </x-dash.button>
+        @endif
+    </x-slot:filterEnd>
     <x-slot:filterStart>
         <x-dash.app-search
             type="search"

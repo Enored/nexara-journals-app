@@ -159,6 +159,6 @@ final class JournalEditionIndexFilters
      */
     private static function indexUrl(Journal $journal, array $filters): string
     {
-        return platform_route('admin.journals.editions.index', array_merge([$journal], self::queryParams($filters)));
+        return platform_route('journal.editions.index', array_merge([$journal], self::queryParams($filters)));
     }
 }

@@ -10,7 +10,7 @@ use App\Models\User;
 use App\Support\AdminAuditLogger;
 use App\Support\AdminUserAccountService;
 use App\Support\AdminUserCsvExporter;
-use App\Support\AdminUserCsvImporter;
+use App\Support\AdminUserCreator;
 use App\Support\AdminUserIndexFilters;
 use App\Support\AdminUserRoleSynchronizer;
 use App\Support\Impersonation;
@@ -60,23 +60,27 @@ class UserManageController extends Controller
         );
     }
 
-    public function import(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+        $data = $request->validate([
+            'first_name' => ['required', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'is_platform_admin' => ['sometimes', 'boolean'],
+            'is_active' => ['sometimes', 'boolean'],
         ]);
 
-        $result = (new AdminUserCsvImporter)->import($request->file('file'), $request->user());
+        $data['is_platform_admin'] = $request->boolean('is_platform_admin');
+        $data['is_active'] = $request->boolean('is_active', true);
 
-        $redirect = redirect()->route('admin.users.index', AdminUserIndexFilters::returnQueryFromRequest($request));
+        $result = AdminUserCreator::create($data, $request->user());
+        $user = $result['user'];
 
-        if ($result->hasErrors()) {
-            return $redirect
-                ->with('error', $result->summaryMessage())
-                ->with('import_errors', $result->errors);
-        }
-
-        return $redirect->with('status', $result->summaryMessage());
+        return redirect()
+            ->route('admin.users.index', AdminUserIndexFilters::returnQueryFromRequest($request))
+            ->with('created_user_name', $user->name)
+            ->with('created_user_email', $user->email)
+            ->with('created_user_password', $result['plainPassword']);
     }
 
     public function suspend(Request $request, User $user): RedirectResponse

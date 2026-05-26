@@ -169,6 +169,6 @@ final class EditorPipelineIndexFilters
      */
     private static function indexUrl(array $filters): string
     {
-        return platform_route('editor.pipeline', self::queryParams($filters));
+        return platform_route('editor.submissions', self::queryParams($filters));
     }
 }

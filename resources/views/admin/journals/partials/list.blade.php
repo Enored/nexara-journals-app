@@ -24,7 +24,7 @@
                 <td class="text-end text-nowrap">
                     <x-dash.link :href="platform_route('admin.journals.edit', $journal)">Edit</x-dash.link>
                     <span class="text-muted mx-1">·</span>
-                    <x-dash.link :href="platform_route('admin.journals.editions.index', $journal)">Issues</x-dash.link>
+                    <x-dash.link :href="platform_route('journal.editions.index', $journal)">Issues</x-dash.link>
                 </td>
             </tr>
         @empty

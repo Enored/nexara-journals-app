@@ -8,7 +8,6 @@ use App\Support\AdminAuditLogger;
 use App\Support\AdminUserCsvExporter;
 use App\Support\Impersonation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -114,31 +113,37 @@ class AdminUserManagementTest extends TestCase
         $this->assertAuthenticatedAs($admin);
     }
 
-    public function test_platform_admin_can_import_users_from_csv(): void
+    public function test_platform_admin_can_create_user_with_generated_password(): void
     {
         $admin = $this->asPlatformAdmin();
 
-        $csv = "Name,Email,Platform admin,Status,Journal roles\n";
-        $csv .= "Imported Person,imported@example.com,No,Active,\n";
-
-        $file = UploadedFile::fake()->createWithContent('users.csv', $csv);
-
         $this->withoutMiddleware(RedirectPlatformRoutesToApex::class)
             ->actingAs($admin)
-            ->post(route('admin.users.import'), ['file' => $file])
+            ->post(route('admin.users.store', absolute: false), [
+                'first_name' => 'New',
+                'last_name' => 'Editor',
+                'email' => 'new.editor@example.com',
+                'is_active' => '1',
+                'is_platform_admin' => '0',
+            ])
             ->assertRedirect(route('admin.users.index', absolute: false))
-            ->assertSessionHas('status');
+            ->assertSessionHas('created_user_password')
+            ->assertSessionHas('created_user_email', 'new.editor@example.com')
+            ->assertSessionHas('created_user_name', 'New Editor');
 
-        $this->assertDatabaseHas('users', [
-            'email' => 'imported@example.com',
-            'name' => 'Imported Person',
-            'is_active' => true,
-            'is_platform_admin' => false,
-        ]);
+        $plainPassword = session('created_user_password');
+        $this->assertIsString($plainPassword);
+        $this->assertGreaterThanOrEqual(12, strlen($plainPassword));
+
+        $user = User::query()->where('email', 'new.editor@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertTrue(Hash::check($plainPassword, $user->password));
+        $this->assertSame('New Editor', $user->name);
 
         $this->assertDatabaseHas('admin_audit_logs', [
             'actor_id' => $admin->id,
-            'action' => AdminAuditLogger::USER_IMPORTED,
+            'subject_user_id' => $user->id,
+            'action' => AdminAuditLogger::USER_CREATED,
         ]);
     }
 

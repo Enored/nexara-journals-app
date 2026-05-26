@@ -38,7 +38,7 @@ class EditorPipelineController extends Controller
         $statsBase = Submission::query()->whereIn('journal_id', $journalIds);
         $stats = [
             'total' => (clone $statsBase)->count(),
-            'pipeline' => (clone $statsBase)->whereIn('status', [
+            'in_progress' => (clone $statsBase)->whereIn('status', [
                 SubmissionStatus::Submitted,
                 SubmissionStatus::UnderReview,
                 SubmissionStatus::RevisionRequested,
@@ -63,7 +63,7 @@ class EditorPipelineController extends Controller
         return $this->dashListResponse(
             $request,
             'dashboard.editor.partials.pipeline-list',
-            'dashboard.editor.pipeline',
+            'dashboard.editor.submissions',
             $data,
         );
     }

@@ -5,7 +5,7 @@
             <a href="{{ platform_route('admin.dashboard') }}" class="rounded px-2 py-1 hover:bg-white hover:text-journal-primary">Admin</a>
         @endif
         @if (auth()->user()->journalUserRoles()->where('role', \App\Enums\JournalRole::Editor)->exists())
-            <a href="{{ platform_route('editor.pipeline') }}" class="rounded px-2 py-1 hover:bg-white hover:text-journal-primary">Editor</a>
+            <a href="{{ platform_route('editor.submissions') }}" class="rounded px-2 py-1 hover:bg-white hover:text-journal-primary">Editor</a>
         @endif
         @if (auth()->user()->journalUserRoles()->where('role', \App\Enums\JournalRole::Reviewer)->exists())
             <a href="{{ platform_route('reviewer.inbox') }}" class="rounded px-2 py-1 hover:bg-white hover:text-journal-primary">Reviewer</a>

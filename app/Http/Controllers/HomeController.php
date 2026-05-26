@@ -38,10 +38,16 @@ class HomeController extends Controller
 
             $publishedByEdition = $published->groupBy('edition_id');
 
+            $publishedCount = Submission::query()
+                ->where('journal_id', $journal->id)
+                ->where('status', SubmissionStatus::Published)
+                ->count();
+
             return view('journal.home', [
                 'journal' => $journal,
                 'forthcoming' => $forthcoming,
                 'publishedByEdition' => $publishedByEdition,
+                'publishedCount' => $publishedCount,
             ]);
         }
 
@@ -50,8 +56,16 @@ class HomeController extends Controller
             ->orderBy('name')
             ->get();
 
+        $latestArticles = Submission::query()
+            ->where('status', SubmissionStatus::Published)
+            ->with(['journal', 'author'])
+            ->orderByDesc('submitted_at')
+            ->limit(5)
+            ->get();
+
         return view('home', [
             'journals' => $journals,
+            'latestArticles' => $latestArticles,
         ]);
     }
 }

@@ -1,6 +1,6 @@
 <x-dash.list-card
     class="mt-4"
-    :filter-action="platform_route('editor.pipeline')"
+    :filter-action="platform_route('editor.submissions')"
     :paginator="$submissions"
     item-label="submissions"
 >
@@ -25,14 +25,14 @@
             @endforeach
         </x-dash.app-search>
         @if ($hasActiveFilters)
-            <x-dash.button variant="secondary" :href="platform_route('editor.pipeline')" data-dash-partial-link>Reset</x-dash.button>
+            <x-dash.button variant="secondary" :href="platform_route('editor.submissions')" data-dash-partial-link>Reset</x-dash.button>
         @endif
     </x-slot:filterStart>
     @if ($hasActiveFilters)
         <x-slot:pills>
             <x-dash.filter-pills
                 :pills="$activeFilterPills"
-                :reset-url="platform_route('editor.pipeline')"
+                :reset-url="platform_route('editor.submissions')"
             />
         </x-slot:pills>
     @endif

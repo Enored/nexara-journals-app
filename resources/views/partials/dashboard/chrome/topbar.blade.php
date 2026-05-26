@@ -5,12 +5,12 @@
         <div class="d-flex align-items-center gap-2">
             <div class="logo-topbar">
                 <a href="{{ platform_route('dashboard') }}" class="logo-light">
-                    <span class="logo-lg"><img src="{{ dashboard_asset('images/logo.png') }}" alt="{{ platform_name() }}"></span>
-                    <span class="logo-sm"><img src="{{ dashboard_asset('images/logo-sm.png') }}" alt="{{ platform_name() }}"></span>
+                    <span class="logo-lg" style="font-size: 1rem; font-weight: 600; color: #fff; white-space: nowrap;">Nexara Journals</span>
+                    <span class="logo-sm" style="font-size: 0.75rem; font-weight: 700; color: #fff;">NJ</span>
                 </a>
                 <a href="{{ platform_route('dashboard') }}" class="logo-dark">
-                    <span class="logo-lg"><img src="{{ dashboard_asset('images/logo-black.png') }}" alt="{{ platform_name() }}"></span>
-                    <span class="logo-sm"><img src="{{ dashboard_asset('images/logo-sm.png') }}" alt="{{ platform_name() }}"></span>
+                    <span class="logo-lg" style="font-size: 1rem; font-weight: 600; color: #313a46; white-space: nowrap;">Nexara Journals</span>
+                    <span class="logo-sm" style="font-size: 0.75rem; font-weight: 700; color: #313a46;">NJ</span>
                 </a>
             </div>
 

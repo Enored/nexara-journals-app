@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\EditionStatus;
 use App\Enums\SubmissionStatus;
+use App\Http\Controllers\Concerns\ProvidesJournalEditionViews;
 use App\Http\Controllers\Concerns\ReturnsDashListPartial;
 use App\Http\Controllers\Controller;
 use App\Models\Edition;
@@ -20,7 +21,7 @@ use Illuminate\View\View;
 
 class JournalEditionManageController extends Controller
 {
-    use ReturnsDashListPartial;
+    use ProvidesJournalEditionViews, ReturnsDashListPartial;
 
     public function index(Request $request, Journal $journal): View
     {
@@ -29,7 +30,7 @@ class JournalEditionManageController extends Controller
         $filters = JournalEditionIndexFilters::fromRequest($request);
         $editions = JournalEditionIndexFilters::paginate($journal, $filters);
 
-        $data = [
+        $data = $this->withEditionLayout($journal, [
             'journal' => $journal,
             'volumes' => $this->journalVolumes($journal),
             'editions' => $editions,
@@ -37,12 +38,12 @@ class JournalEditionManageController extends Controller
             'statuses' => EditionStatus::cases(),
             'activeFilterPills' => JournalEditionIndexFilters::activeFilterPills($journal, $filters),
             'hasActiveFilters' => JournalEditionIndexFilters::hasActiveFilters($filters),
-        ];
+        ]);
 
         return $this->dashListResponse(
             $request,
-            'admin.journals.editions.partials.list',
-            'admin.journals.editions.index',
+            'journals.editions.partials.list',
+            'journals.editions.index',
             $data,
         );
     }
@@ -59,11 +60,11 @@ class JournalEditionManageController extends Controller
             ->orderByDesc('submitted_at')
             ->get();
 
-        return view('admin.journals.editions.show', [
+        return view('journals.editions.show', $this->withEditionLayout($journal, [
             'journal' => $journal,
             'edition' => $edition,
             'articles' => $articles,
-        ]);
+        ]));
     }
 
     public function edit(Request $request, Journal $journal, Edition $edition): View|RedirectResponse
@@ -72,10 +73,10 @@ class JournalEditionManageController extends Controller
         $this->ensureEditionBelongsToJournal($journal, $edition);
 
         if (! $request->boolean('modal')) {
-            return redirect()->route('admin.journals.editions.show', [$journal, $edition]);
+            return redirect()->route('journal.editions.show', [$journal, $edition]);
         }
 
-        return view('admin.journals.editions.partials.edit-form', [
+        return view('journals.editions.partials.edit-form', [
             'journal' => $journal,
             'edition' => $edition,
             'volumes' => $this->journalVolumes($journal),
@@ -88,10 +89,10 @@ class JournalEditionManageController extends Controller
         $this->ensureEditionBelongsToJournal($journal, $edition);
 
         if (! $request->boolean('modal')) {
-            return redirect()->route('admin.journals.editions.show', [$journal, $edition]);
+            return redirect()->route('journal.editions.show', [$journal, $edition]);
         }
 
-        return view('admin.journals.editions.partials.add-article-form', [
+        return view('journals.editions.partials.add-article-form', [
             'journal' => $journal,
             'edition' => $edition,
             'availableToAdd' => $this->availableSubmissionsToAdd($journal, $edition),
@@ -104,7 +105,7 @@ class JournalEditionManageController extends Controller
         $this->ensureEditionBelongsToJournal($journal, $edition);
 
         if (! $request->boolean('modal')) {
-            return redirect()->route('admin.journals.editions.show', [$journal, $edition]);
+            return redirect()->route('journal.editions.show', [$journal, $edition]);
         }
 
         abort_unless($edition->isDraft(), 404);
@@ -113,7 +114,7 @@ class JournalEditionManageController extends Controller
             ->where('status', SubmissionStatus::Accepted)
             ->count();
 
-        return view('admin.journals.editions.partials.publish-form', [
+        return view('journals.editions.partials.publish-form', [
             'journal' => $journal,
             'edition' => $edition,
             'slottedCount' => $slottedCount,
@@ -125,10 +126,10 @@ class JournalEditionManageController extends Controller
         $this->authorize('manageEditions', $journal);
 
         if (! $request->boolean('modal')) {
-            return redirect()->route('admin.journals.editions.index', $journal);
+            return redirect()->route('journal.editions.index', $journal);
         }
 
-        return view('admin.journals.editions.partials.create-form', [
+        return view('journals.editions.partials.create-form', [
             'journal' => $journal,
             'volumes' => $this->journalVolumes($journal),
         ]);
@@ -139,10 +140,10 @@ class JournalEditionManageController extends Controller
         $this->authorize('manageEditions', $journal);
 
         if (! $request->boolean('modal')) {
-            return redirect()->route('admin.journals.editions.index', $journal);
+            return redirect()->route('journal.editions.index', $journal);
         }
 
-        return view('admin.journals.editions.partials.create-volume-form', [
+        return view('journals.editions.partials.create-volume-form', [
             'journal' => $journal,
             'suggestedNumber' => $this->suggestedNextVolumeNumber($journal),
         ]);
@@ -175,7 +176,7 @@ class JournalEditionManageController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.journals.editions.index', $journal)
+            ->route('journal.editions.index', $journal)
             ->with('status', 'Volume '.$data['number'].' created. You can now add issues to it.');
     }
 
@@ -186,7 +187,7 @@ class JournalEditionManageController extends Controller
 
         if ($volume->editions()->exists()) {
             return redirect()
-                ->route('admin.journals.editions.index', $journal)
+                ->route('journal.editions.index', $journal)
                 ->with('error', 'Remove or reassign all issues in this volume before deleting it.');
         }
 
@@ -194,7 +195,7 @@ class JournalEditionManageController extends Controller
         $volume->delete();
 
         return redirect()
-            ->route('admin.journals.editions.index', $journal)
+            ->route('journal.editions.index', $journal)
             ->with('status', "{$label} deleted.");
     }
 
@@ -224,7 +225,7 @@ class JournalEditionManageController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.journals.editions.show', [$journal, $edition])
+            ->route('journal.editions.show', [$journal, $edition])
             ->with('status', 'Draft issue created. Add accepted articles, then publish when ready.');
     }
 
@@ -263,7 +264,7 @@ class JournalEditionManageController extends Controller
         ]);
 
         return redirect()
-            ->route('admin.journals.editions.show', [$journal, $edition])
+            ->route('journal.editions.show', [$journal, $edition])
             ->with('status', 'Issue updated.');
     }
 
@@ -275,7 +276,7 @@ class JournalEditionManageController extends Controller
         EditionPublisher::publish($edition);
 
         return redirect()
-            ->route('admin.journals.editions.show', [$journal, $edition->fresh()])
+            ->route('journal.editions.show', [$journal, $edition->fresh()])
             ->with('status', 'Issue published. Slotted articles are now live on the journal site.');
     }
 
@@ -287,7 +288,7 @@ class JournalEditionManageController extends Controller
         EditionPublisher::unpublish($edition);
 
         return redirect()
-            ->route('admin.journals.editions.show', [$journal, $edition->fresh()])
+            ->route('journal.editions.show', [$journal, $edition->fresh()])
             ->with('status', 'Issue unpublished. Articles were moved back to accepted and remain slotted in this issue.');
     }
 
@@ -305,7 +306,7 @@ class JournalEditionManageController extends Controller
         EditionPublisher::slotSubmission($edition, $submission);
 
         return redirect()
-            ->route('admin.journals.editions.show', [$journal, $edition])
+            ->route('journal.editions.show', [$journal, $edition])
             ->with('status', $wasPublished
                 ? 'Article added and published on the journal site.'
                 : 'Article added to this issue.');
@@ -319,7 +320,7 @@ class JournalEditionManageController extends Controller
         EditionPublisher::removeSubmission($edition, $submission);
 
         return redirect()
-            ->route('admin.journals.editions.show', [$journal, $edition])
+            ->route('journal.editions.show', [$journal, $edition])
             ->with('status', 'Article removed from this issue.');
     }
 
@@ -332,7 +333,7 @@ class JournalEditionManageController extends Controller
         EditionPublisher::delete($edition);
 
         return redirect()
-            ->route('admin.journals.editions.index', $journal)
+            ->route('journal.editions.index', $journal)
             ->with('status', "Issue {$label} deleted. Slotted articles were returned to accepted and are no longer assigned to an issue.");
     }
 

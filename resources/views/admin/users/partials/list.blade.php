@@ -13,9 +13,9 @@
     item-label="users"
 >
     <x-slot:filterEnd>
-        <x-dash.button variant="secondary" data-bs-toggle="modal" data-bs-target="#user-import-modal">
-            <i data-lucide="upload" class="fs-sm me-1"></i>
-            Import CSV
+        <x-dash.button data-bs-toggle="modal" data-bs-target="#user-create-modal">
+            <i data-lucide="user-plus" class="fs-sm me-1"></i>
+            Create user
         </x-dash.button>
         <x-dash.button variant="secondary" :href="$exportUrl">
             <i data-lucide="download" class="fs-sm me-1"></i>
