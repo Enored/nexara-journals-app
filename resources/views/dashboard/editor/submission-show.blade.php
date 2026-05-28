@@ -70,12 +70,10 @@
             @endcan
 
             @can('recordDecision', $submission)
-                @if ($submission->status === \App\Enums\SubmissionStatus::UnderReview)
-                    @include('dashboard.editor.partials.editorial-decision-form', [
-                        'submission' => $submission,
-                        'roundReviews' => $roundReviews,
-                    ])
-                @endif
+                @include('dashboard.editor.partials.editorial-decision-form', [
+                    'submission' => $submission,
+                    'roundReviews' => $roundReviews,
+                ])
             @endcan
         </div>
 
@@ -126,7 +124,7 @@
                 <div class="card mb-3 border-success" style="background: #f0fdf4;">
                     <div class="card-body">
                         <h5 class="card-title">Add to issue</h5>
-                        <p class="text-muted fs-sm">Slot this accepted manuscript into a <strong>draft</strong> issue. It becomes public when the issue is published.</p>
+                        <p class="text-muted fs-sm">Assign this accepted manuscript to an issue. If the issue is already published, the article goes live immediately.</p>
                         @if ($submission->edition_id && $submission->status === \App\Enums\SubmissionStatus::Accepted)
                             <p class="mt-2 mb-0 px-3 py-2 rounded border bg-white fs-sm">
                                 Slotted in <strong>{{ $submission->edition?->label() ?? 'issue' }}</strong> (draft until published).
@@ -134,15 +132,17 @@
                         @elseif ($submission->status === \App\Enums\SubmissionStatus::Published && $submission->edition)
                             <p class="mt-2 mb-0 text-success fs-sm">Live in <strong>{{ $submission->edition->label() }}</strong>.</p>
                         @elseif ($editionsForPublish->isEmpty())
-                            <p class="mt-2 mb-0 text-warning fs-sm">No draft issues yet. Create one under Issues &amp; volumes.</p>
+                            <p class="mt-2 mb-0 text-warning fs-sm">No issues yet. Create one under Issues &amp; volumes.</p>
                         @else
                             <form method="POST" action="{{ platform_route('editor.submissions.publish', $submission) }}" class="mt-3">
                                 @csrf
                                 <div class="mb-2">
-                                    <label class="form-label fs-sm fw-medium">Draft issue</label>
+                                    <label class="form-label fs-sm fw-medium">Issue</label>
                                     <select name="edition_id" required class="form-select form-select-sm">
                                         @foreach ($editionsForPublish as $ed)
-                                            <option value="{{ $ed->id }}" @selected($submission->edition_id === $ed->id)>{{ $ed->label() }}</option>
+                                            <option value="{{ $ed->id }}" @selected($submission->edition_id === $ed->id)>
+                                                {{ $ed->label() }} ({{ $ed->isPublished() ? 'published' : 'draft' }})
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>

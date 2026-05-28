@@ -13,12 +13,12 @@ class ReviewInvitationController extends Controller
 {
     public function accept(ReviewAssignment $assignment): View
     {
-        if ($assignment->status !== ReviewAssignmentStatus::Invited) {
+        if ($assignment->status !== ReviewAssignmentStatus::Assigned) {
             return view('reviews.invitation-closed', ['assignment' => $assignment]);
         }
 
         $assignment->update([
-            'status' => ReviewAssignmentStatus::Accepted,
+            'status' => ReviewAssignmentStatus::Assigned,
             'responded_at' => now(),
         ]);
 
@@ -45,29 +45,6 @@ class ReviewInvitationController extends Controller
 
     public function decline(Request $request, ReviewAssignment $assignment): RedirectResponse
     {
-        $data = $request->validate([
-            'reason' => ['nullable', 'string', 'max:5000'],
-        ]);
-
-        if ($assignment->status !== ReviewAssignmentStatus::Invited) {
-            return redirect()->back()->withErrors(['invitation' => 'This invitation is no longer active.']);
-        }
-
-        $assignment->update([
-            'status' => ReviewAssignmentStatus::Declined,
-            'responded_at' => now(),
-            'decline_reason' => $data['reason'] ?? null,
-        ]);
-
-        WorkflowNotification::query()->create([
-            'user_id' => $assignment->editor_id,
-            'type' => 'reviewer_declined',
-            'data' => [
-                'submission_id' => $assignment->submission_id,
-                'assignment_id' => $assignment->id,
-            ],
-        ]);
-
-        return redirect()->route('home')->with('status', 'You have declined the review invitation.');
+        return redirect()->route('home')->with('status', 'Review assignments cannot be declined.');
     }
 }

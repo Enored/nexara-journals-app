@@ -18,12 +18,16 @@ class PlatformSetting extends Model
         'platform_name',
         'maintenance_mode',
         'favicon_path',
+        'logo_path',
+        'logo_text',
+        'show_logo_text_with_image',
     ];
 
     protected function casts(): array
     {
         return [
             'maintenance_mode' => 'boolean',
+            'show_logo_text_with_image' => 'boolean',
         ];
     }
 

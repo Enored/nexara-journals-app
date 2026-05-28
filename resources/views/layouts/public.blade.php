@@ -21,8 +21,23 @@
 <body>
 
 <header class="header fadeInDown animated">
+    @php
+        $pubBrand = \App\Models\PlatformSetting::current();
+        $pubBrandText = $pubBrand->logo_text ?: $pubBrand->platform_name;
+        $pubHasLogo = (bool) $pubBrand->logo_path;
+        $pubShowTextWithLogo = $pubBrand->show_logo_text_with_image;
+    @endphp
     <div id="logo">
-        <a href="{{ route('home') }}" style="font-size: 1.5rem; font-weight: 700; color: #333; text-decoration: none; white-space: nowrap;">Nexara Journals</a>
+        <a href="{{ route('home') }}" style="font-size: 1.5rem; font-weight: 700; color: #333; text-decoration: none; white-space: nowrap;">
+            @if ($pubHasLogo)
+                <img src="{{ asset($pubBrand->logo_path) }}" alt="{{ $pubBrandText }}" style="max-height: 36px; vertical-align: middle;">
+                @if ($pubShowTextWithLogo)
+                    <span style="margin-left: 0.5rem; vertical-align: middle;">{{ $pubBrandText }}</span>
+                @endif
+            @else
+                {{ $pubBrandText }}
+            @endif
+        </a>
     </div>
     <ul id="top_menu">
         <li class="slash hidden-xs"><a href="{{ route('home') }}#journals">Journals</a></li>

@@ -13,6 +13,7 @@ use App\Models\Submission;
 use App\Models\Volume;
 use App\Support\EditionPublisher;
 use App\Support\JournalEditionIndexFilters;
+use App\Support\VolumeIndexFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -30,41 +31,63 @@ class JournalEditionManageController extends Controller
         $filters = JournalEditionIndexFilters::fromRequest($request);
         $editions = JournalEditionIndexFilters::paginate($journal, $filters);
 
+        $volumeFilters = VolumeIndexFilters::fromRequest($request);
+        $volumes = VolumeIndexFilters::paginate($journal, $volumeFilters);
+
         $data = $this->withEditionLayout($journal, [
             'journal' => $journal,
-            'volumes' => $this->journalVolumes($journal),
+            'volumes' => $volumes,
             'editions' => $editions,
             'filters' => $filters,
+            'volumeFilters' => $volumeFilters,
+            'volumeHasActiveFilters' => VolumeIndexFilters::hasActiveFilters($volumeFilters),
+            'volumeActiveFilterPills' => VolumeIndexFilters::activeFilterPills($journal, $volumeFilters),
             'statuses' => EditionStatus::cases(),
             'activeFilterPills' => JournalEditionIndexFilters::activeFilterPills($journal, $filters),
             'hasActiveFilters' => JournalEditionIndexFilters::hasActiveFilters($filters),
         ]);
 
-        return $this->dashListResponse(
-            $request,
-            'journals.editions.partials.list',
-            'journals.editions.index',
-            $data,
-        );
+        if ($request->header(self::DASH_LIST_PARTIAL_HEADER) === '1') {
+            return view('journals.editions.partials.combined-list', $data);
+        }
+
+        return view('journals.editions.index', $data);
     }
 
-    public function show(Journal $journal, Edition $edition): View
+    public function show(Request $request, Journal $journal, Edition $edition): View
     {
         $this->authorize('manageEditions', $journal);
         $this->ensureEditionBelongsToJournal($journal, $edition);
 
         $edition->load(['journal', 'volume']);
 
-        $articles = $edition->submissions()
+        $articlesQuery = $edition->submissions()
             ->with('author')
-            ->orderByDesc('submitted_at')
-            ->get();
+            ->orderByDesc('submitted_at');
 
-        return view('journals.editions.show', $this->withEditionLayout($journal, [
+        $articleSearch = trim($request->string('aq')->toString());
+        if ($articleSearch !== '') {
+            $like = '%'.mb_strtolower($articleSearch).'%';
+            $articlesQuery->where(function ($q) use ($like) {
+                $q->whereRaw('LOWER(title) LIKE ?', [$like])
+                    ->orWhereHas('author', fn ($a) => $a->whereRaw('LOWER(name) LIKE ?', [$like]));
+            });
+        }
+
+        $articles = $articlesQuery->paginate(15)->withQueryString();
+
+        $data = $this->withEditionLayout($journal, [
             'journal' => $journal,
             'edition' => $edition,
             'articles' => $articles,
-        ]));
+            'articleSearch' => $articleSearch,
+        ]);
+
+        if ($request->header(self::DASH_LIST_PARTIAL_HEADER) === '1') {
+            return view('journals.editions.partials.articles-list', $data);
+        }
+
+        return view('journals.editions.show', $data);
     }
 
     public function edit(Request $request, Journal $journal, Edition $edition): View|RedirectResponse

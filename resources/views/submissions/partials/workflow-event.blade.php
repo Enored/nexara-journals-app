@@ -17,12 +17,8 @@
                 </time>
             </div>
 
-            @if ($event['kind'] === 'reviewer_invited' && ! empty($meta['deadline']))
+            @if ($event['kind'] === 'reviewer_assigned' && ! empty($meta['deadline']))
                 <p class="mt-1 mb-0 text-muted">Deadline {{ $meta['deadline'] }}</p>
-            @endif
-
-            @if ($event['kind'] === 'reviewer_declined' && ! empty($meta['reason']))
-                <p class="mt-1 mb-0 text-muted">{{ $meta['reason'] }}</p>
             @endif
 
             @if ($event['kind'] === 'review_submitted' && ! $forAuthor)

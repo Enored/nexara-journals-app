@@ -15,8 +15,16 @@ class SubmissionEditorialDecision extends Model
         'version',
         'decision',
         'decision_letter',
+        'assessment_flags',
         'recorded_by',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'assessment_flags' => 'array',
+        ];
+    }
 
     public function submission(): BelongsTo
     {

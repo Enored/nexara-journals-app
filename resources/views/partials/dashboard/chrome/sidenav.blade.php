@@ -10,14 +10,39 @@
 @endphp
 
 <div class="sidenav-menu">
+    @php
+        $brandSettings = \App\Models\PlatformSetting::current();
+        $brandText = $brandSettings->logo_text ?: $brandSettings->platform_name;
+        $brandAbbr = mb_strtoupper(collect(explode(' ', $brandText))->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->join(''));
+        $hasLogo = (bool) $brandSettings->logo_path;
+        $showTextWithLogo = $brandSettings->show_logo_text_with_image;
+    @endphp
     <a href="{{ platform_route('dashboard') }}" class="logo">
         <span class="logo logo-light">
-            <span class="logo-lg" style="font-size: 1rem; font-weight: 600; color: #fff; white-space: nowrap;">Nexara Journals</span>
-            <span class="logo-sm" style="font-size: 0.75rem; font-weight: 700; color: #fff;">NJ</span>
+            <span class="logo-lg" style="white-space: nowrap;">
+                @if ($hasLogo)
+                    <img src="{{ asset($brandSettings->logo_path) }}" alt="{{ $brandText }}" style="max-height: 28px;">
+                    @if ($showTextWithLogo)
+                        <span style="font-size: 1rem; font-weight: 600; color: #fff; margin-left: 0.5rem;">{{ $brandText }}</span>
+                    @endif
+                @else
+                    <span style="font-size: 1rem; font-weight: 600; color: #fff;">{{ $brandText }}</span>
+                @endif
+            </span>
+            <span class="logo-sm" style="font-size: 0.75rem; font-weight: 700; color: #fff;">{{ $brandAbbr }}</span>
         </span>
         <span class="logo logo-dark">
-            <span class="logo-lg" style="font-size: 1rem; font-weight: 600; color: #313a46; white-space: nowrap;">Nexara Journals</span>
-            <span class="logo-sm" style="font-size: 0.75rem; font-weight: 700; color: #313a46;">NJ</span>
+            <span class="logo-lg" style="white-space: nowrap;">
+                @if ($hasLogo)
+                    <img src="{{ asset($brandSettings->logo_path) }}" alt="{{ $brandText }}" style="max-height: 28px;">
+                    @if ($showTextWithLogo)
+                        <span style="font-size: 1rem; font-weight: 600; color: #313a46; margin-left: 0.5rem;">{{ $brandText }}</span>
+                    @endif
+                @else
+                    <span style="font-size: 1rem; font-weight: 600; color: #313a46;">{{ $brandText }}</span>
+                @endif
+            </span>
+            <span class="logo-sm" style="font-size: 0.75rem; font-weight: 700; color: #313a46;">{{ $brandAbbr }}</span>
         </span>
     </a>
 

@@ -41,9 +41,9 @@
                         </div>
                         <div class="modal-body">
                             <x-dash.select label="Journal" name="journal_id" required>
-                                <option value="" disabled @selected(! old('journal_id'))>Select a journal…</option>
+                                <option value="" disabled @selected(! old('journal_id') && ! request('journal'))>Select a journal…</option>
                                 @foreach ($submitJournals as $journal)
-                                    <option value="{{ $journal->id }}" @selected(old('journal_id') === $journal->id)>
+                                    <option value="{{ $journal->id }}" @selected(old('journal_id') === $journal->id || (! old('journal_id') && request('journal') === $journal->id))>
                                         {{ $journal->name }}
                                     </option>
                                 @endforeach
@@ -98,12 +98,13 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            @if ($errors->hasAny(['journal_id', 'title', 'abstract', 'keywords', 'article_type', 'manuscript']))
-            const modalEl = document.getElementById('manuscript-create-modal');
-            if (modalEl && window.bootstrap?.Modal) {
-                window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            const shouldOpen = {{ ($errors->hasAny(['journal_id', 'title', 'abstract', 'keywords', 'article_type', 'manuscript']) || request('create')) ? 'true' : 'false' }};
+            if (shouldOpen) {
+                const modalEl = document.getElementById('manuscript-create-modal');
+                if (modalEl && window.bootstrap?.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                }
             }
-            @endif
         });
     </script>
 @endpush

@@ -15,13 +15,15 @@ class EditorDecisionController extends Controller
     {
         $this->authorize('recordDecision', $submission);
 
-        if ($submission->status !== SubmissionStatus::UnderReview) {
-            return back()->withErrors(['decision' => 'A decision can be recorded while the manuscript is under review.']);
+        if (! in_array($submission->status, [SubmissionStatus::Submitted, SubmissionStatus::UnderReview], true)) {
+            return back()->withErrors(['decision' => 'A decision can only be recorded for submitted or in-review manuscripts.']);
         }
 
         $data = $request->validate([
             'decision' => ['required', 'string', 'in:accept,minor_revision,major_revision,reject'],
             'decision_letter' => ['required', 'string'],
+            'flags' => ['nullable', 'array'],
+            'flags.*' => ['string', 'in:originality_verified,ai_content_detected,plagiarism_checked,ethics_reviewed,data_availability_confirmed'],
         ]);
 
         $status = match ($data['decision']) {
@@ -40,6 +42,7 @@ class EditorDecisionController extends Controller
             'version' => $submission->version,
             'decision' => $data['decision'],
             'decision_letter' => $data['decision_letter'],
+            'assessment_flags' => $data['flags'] ?? [],
             'recorded_by' => $request->user()->id,
         ]);
 

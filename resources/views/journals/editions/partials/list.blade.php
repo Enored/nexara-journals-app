@@ -1,4 +1,8 @@
-@php($editionCreateModalUrl = platform_route('journal.editions.create', $journal).'?modal=1')
+@php
+    $editionCreateModalUrl = platform_route('journal.editions.create', $journal).'?modal=1';
+    $editionResetParams = collect(request()->query())->except(['q', 'status', 'page'])->all();
+    $editionResetUrl = platform_route('journal.editions.index', array_merge([$journal], $editionResetParams));
+@endphp
 
 <p class="text-muted mb-4">
     Create <strong>draft</strong> issues, add accepted articles, then <strong>publish</strong> when ready — similar to scheduling content before it goes public.
@@ -24,7 +28,7 @@
             @endforeach
         </x-dash.app-search>
         @if ($hasActiveFilters)
-            <x-dash.button variant="secondary" :href="platform_route('journal.editions.index', $journal)" data-dash-partial-link>Reset</x-dash.button>
+            <x-dash.button variant="secondary" :href="$editionResetUrl" data-dash-partial-link>Reset</x-dash.button>
         @endif
     </x-slot:filterStart>
     <x-slot:filterEnd>
@@ -42,7 +46,7 @@
         <x-slot:pills>
             <x-dash.filter-pills
                 :pills="$activeFilterPills"
-                :reset-url="platform_route('journal.editions.index', $journal)"
+                :reset-url="$editionResetUrl"
             />
         </x-slot:pills>
     @endif

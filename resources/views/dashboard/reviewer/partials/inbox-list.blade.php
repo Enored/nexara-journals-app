@@ -31,7 +31,7 @@
         </x-dash.app-search>
         <x-dash.app-search type="select" name="sort" id="reviewer-filter-sort" icon="arrow-up-down">
             <option value="{{ ReviewerInboxIndexFilters::SORT_DEADLINE }}" @selected($filters['sort'] === ReviewerInboxIndexFilters::SORT_DEADLINE)>Deadline (soonest)</option>
-            <option value="{{ ReviewerInboxIndexFilters::SORT_INVITED }}" @selected($filters['sort'] === ReviewerInboxIndexFilters::SORT_INVITED)>Recently invited</option>
+            <option value="{{ ReviewerInboxIndexFilters::SORT_ASSIGNED }}" @selected($filters['sort'] === ReviewerInboxIndexFilters::SORT_ASSIGNED)>Recently assigned</option>
         </x-dash.app-search>
         @if ($hasActiveFilters)
             <x-dash.button variant="secondary" :href="platform_route('reviewer.inbox')" data-dash-partial-link>Reset</x-dash.button>
@@ -56,7 +56,7 @@
     </x-slot:header>
     <x-slot:body>
         @forelse ($assignments as $a)
-            @php($overdue = $a->deadline->isPast() && ! in_array($a->status->value, ['completed', 'declined', 'expired'], true))
+            @php($overdue = $a->deadline->isPast() && ! in_array($a->status->value, ['completed', 'expired'], true))
             <tr @class(['table-danger' => $overdue])>
                 <td class="text-nowrap fw-medium">
                     <span @class(['text-danger' => $overdue])>{{ $a->deadline->format('M j, Y') }}</span>
@@ -71,20 +71,9 @@
                 <td>@include('partials.review-assignment-status', ['status' => $a->status])</td>
                 <td class="text-end text-nowrap">
                     <a href="{{ platform_route('review-tasks.show', $a) }}" class="link-primary fw-medium fs-sm">View</a>
-                    @if ($a->status === \App\Enums\ReviewAssignmentStatus::Invited)
+                    @if ($a->status === \App\Enums\ReviewAssignmentStatus::Assigned && ! $a->review)
                         <span class="text-muted mx-1">·</span>
-                        <form method="POST" action="{{ platform_route('review-tasks.accept', $a) }}" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-link btn-sm link-success p-0 fw-medium">Accept</button>
-                        </form>
-                        <span class="text-muted mx-1">·</span>
-                        <form method="POST" action="{{ platform_route('review-tasks.decline', $a) }}" class="d-inline" onsubmit="return confirm('Decline this invitation?');">
-                            @csrf
-                            <button type="submit" class="btn btn-link btn-sm link-secondary p-0 fw-medium">Decline</button>
-                        </form>
-                    @elseif ($a->status === \App\Enums\ReviewAssignmentStatus::Accepted && ! $a->review)
-                        <span class="text-muted mx-1">·</span>
-                        <span class="fw-medium fs-sm">Write review</span>
+                        <span class="fw-medium fs-sm text-success">Write review</span>
                     @endif
                 </td>
             </tr>
@@ -94,7 +83,7 @@
                     @if (($stats['total'] ?? 0) === 0)
                         <x-dash.empty
                             title="No review assignments"
-                            description="When an editor invites you to review, the task will show up here."
+                            description="When an editor assigns you to review, the task will show up here."
                         />
                     @elseif ($hasActiveFilters)
                         <x-dash.empty

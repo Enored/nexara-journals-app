@@ -69,6 +69,34 @@
                     <option value="reject" @selected(old('decision') === 'reject')>Reject</option>
                 </select>
             </div>
+
+            <div class="mb-3">
+                <label class="form-label fs-sm fw-medium">Assessment checklist</label>
+                <p class="text-muted fs-xs mb-2">Indicate which checks were performed for this manuscript.</p>
+                <div class="d-flex flex-column gap-2">
+                    <div class="form-check">
+                        <input type="checkbox" name="flags[]" value="originality_verified" id="flag-originality" class="form-check-input" @checked(is_array(old('flags')) && in_array('originality_verified', old('flags')))>
+                        <label class="form-check-label fs-sm" for="flag-originality">Originality verified</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="flags[]" value="ai_content_detected" id="flag-ai" class="form-check-input" @checked(is_array(old('flags')) && in_array('ai_content_detected', old('flags')))>
+                        <label class="form-check-label fs-sm" for="flag-ai">AI-generated content detected</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="flags[]" value="plagiarism_checked" id="flag-plagiarism" class="form-check-input" @checked(is_array(old('flags')) && in_array('plagiarism_checked', old('flags')))>
+                        <label class="form-check-label fs-sm" for="flag-plagiarism">Plagiarism checked</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="flags[]" value="ethics_reviewed" id="flag-ethics" class="form-check-input" @checked(is_array(old('flags')) && in_array('ethics_reviewed', old('flags')))>
+                        <label class="form-check-label fs-sm" for="flag-ethics">Ethics reviewed</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="flags[]" value="data_availability_confirmed" id="flag-data" class="form-check-input" @checked(is_array(old('flags')) && in_array('data_availability_confirmed', old('flags')))>
+                        <label class="form-check-label fs-sm" for="flag-data">Data availability confirmed</label>
+                    </div>
+                </div>
+            </div>
+
             <div class="mb-3">
                 <label for="decision-letter" class="form-label fs-sm fw-medium">Decision letter to author</label>
                 <p class="text-muted fs-xs mb-2">This is the only feedback the author will see from this round. Summarize your decision; quote reviewers only where appropriate.</p>

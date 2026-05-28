@@ -25,14 +25,23 @@ class AdminPlatformSettingsTest extends TestCase
             ->assertSee('Maintenance mode');
 
         $this->actingAs($admin)
-            ->put(route('admin.settings.update', absolute: false), [
+            ->put(route('admin.settings.branding.update', absolute: false), [
                 'platform_name' => 'Nexara Publishing',
+            ])
+            ->assertRedirect(route('admin.settings.edit', absolute: false))
+            ->assertSessionHas('status');
+
+        PlatformSetting::clearCache();
+        $this->assertSame('Nexara Publishing', PlatformSetting::current()->platform_name);
+
+        $this->actingAs($admin)
+            ->put(route('admin.settings.general.update', absolute: false), [
                 'maintenance_mode' => '0',
             ])
             ->assertRedirect(route('admin.settings.edit', absolute: false))
             ->assertSessionHas('status');
 
-        $this->assertSame('Nexara Publishing', PlatformSetting::current()->platform_name);
+        PlatformSetting::clearCache();
         $this->assertFalse(PlatformSetting::current()->maintenance_mode);
 
         $this->assertDatabaseHas('admin_audit_logs', [

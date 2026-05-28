@@ -2,8 +2,9 @@
 
 @php
     use App\Enums\SubmissionStatus;
-    $slottedCount = $articles->where('status', SubmissionStatus::Accepted)->count();
-    $liveCount = $articles->where('status', SubmissionStatus::Published)->count();
+    $slottedCount = $edition->submissions()->where('status', SubmissionStatus::Accepted)->count();
+    $liveCount = $edition->submissions()->where('status', SubmissionStatus::Published)->count();
+    $totalArticles = $slottedCount + $liveCount;
     $editionSubtitle = $journal->name.' · Vol. '.$edition->volume->number.', No. '.$edition->issue;
     $editModalUrl = platform_route('journal.editions.edit', [$journal, $edition]).'?modal=1';
     $addArticleModalUrl = platform_route('journal.editions.articles.add-form', [$journal, $edition]).'?modal=1';
@@ -81,80 +82,62 @@
         </div>
     </div>
 
-    <x-dash.list-card>
-        <x-slot:filterEnd>
-            <x-dash.button
-                type="button"
-                data-edition-add-article-open
-                data-url="{{ $addArticleModalUrl }}"
-                data-subtitle="{{ $editionSubtitle }}"
-            >
-                <i data-lucide="plus" class="fs-sm me-1"></i>
-                Add article
-            </x-dash.button>
-        </x-slot:filterEnd>
-        <x-slot:header>
-            <tr class="text-uppercase fs-xxs">
-                <th>Title</th>
-                <th>Author</th>
-                <th>Status</th>
-                <th class="text-end">Actions</th>
-            </tr>
-        </x-slot:header>
-        <x-slot:body>
-            @forelse ($articles as $article)
-                <tr>
-                    <td class="fw-medium" style="max-width: 18rem;">{{ Str::limit($article->title, 56) }}</td>
-                    <td class="text-muted">{{ $article->author->name }}</td>
-                    <td>@include('partials.submission-status', ['status' => $article->status])</td>
-                    <td class="text-end text-nowrap">
-                        @if ($edition->isDraft() && $article->status === SubmissionStatus::Accepted)
-                            <form method="POST" action="{{ platform_route('journal.editions.articles.remove', [$journal, $edition, $article]) }}" class="d-inline" onsubmit="return confirm('Remove this article from the issue?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-link btn-sm link-secondary p-0">Remove</button>
-                            </form>
-                        @else
-                            <span class="text-muted">—</span>
-                        @endif
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="4" class="p-0">
-                        <x-dash.empty
-                            title="No articles in this issue"
-                            :description="$edition->isDraft()
-                                ? 'Use Add article to slot accepted manuscripts before publishing.'
-                                : 'Use Add article to publish accepted manuscripts into this live issue.'"
-                        >
-                            <x-dash.button
-                                type="button"
-                                data-edition-add-article-open
-                                data-url="{{ $addArticleModalUrl }}"
-                                data-subtitle="{{ $editionSubtitle }}"
-                            >
-                                Add article
-                            </x-dash.button>
-                        </x-dash.empty>
-                    </td>
-                </tr>
-            @endforelse
-        </x-slot:body>
-    </x-dash.list-card>
+    <x-dash.list-partial-zone>
+        @include('journals.editions.partials.articles-list')
+    </x-dash.list-partial-zone>
 
-    <form
-        method="POST"
-        action="{{ platform_route('journal.editions.destroy', [$journal, $edition]) }}"
-        id="edition-delete-form"
-        class="d-none"
-    >
+    {{-- Hidden forms --}}
+    <form method="POST" action="{{ platform_route('journal.editions.destroy', [$journal, $edition]) }}" id="edition-delete-form" class="d-none">
         @csrf
         @method('DELETE')
+    </form>
+    <form method="POST" action="{{ platform_route('journal.editions.publish', [$journal, $edition]) }}" id="edition-publish-form" class="d-none">
+        @csrf
+    </form>
+    <form method="POST" action="{{ platform_route('journal.editions.unpublish', [$journal, $edition]) }}" id="edition-unpublish-form" class="d-none">
+        @csrf
     </form>
 @endsection
 
 @push('modals')
+    {{-- Publish confirmation --}}
+    <x-admin.confirm-modal
+        id="edition-publish-confirm-modal"
+        title="Publish this issue?"
+        confirm-label="Publish issue"
+        form-id="edition-publish-form"
+        confirm-variant="success"
+    >
+        <p class="mb-2">This will publish <strong>Vol. {{ $edition->volume->number }}, No. {{ $edition->issue }}</strong> on the {{ $journal->name }} journal site.</p>
+        @if ($slottedCount > 0)
+            <p class="mb-0 text-muted">
+                {{ $slottedCount }} slotted article(s) will become publicly visible immediately.
+            </p>
+        @else
+            <p class="mb-0 text-warning">
+                <strong>Warning:</strong> No articles are slotted yet. The issue will be published empty.
+            </p>
+        @endif
+    </x-admin.confirm-modal>
+
+    {{-- Unpublish confirmation --}}
+    <x-admin.confirm-modal
+        id="edition-unpublish-confirm-modal"
+        title="Unpublish this issue?"
+        confirm-label="Unpublish issue"
+        form-id="edition-unpublish-form"
+    >
+        <p class="mb-2">This will take <strong>Vol. {{ $edition->volume->number }}, No. {{ $edition->issue }}</strong> offline from the {{ $journal->name }} journal site.</p>
+        @if ($liveCount > 0)
+            <p class="mb-0 text-muted">
+                {{ $liveCount }} live article(s) will return to <strong>accepted</strong> status but remain slotted in this issue.
+            </p>
+        @else
+            <p class="mb-0 text-muted">The issue has no live articles. It will simply return to draft status.</p>
+        @endif
+    </x-admin.confirm-modal>
+
+    {{-- Delete confirmation --}}
     <x-admin.confirm-modal
         id="edition-delete-modal"
         title="Delete this issue?"
@@ -162,9 +145,9 @@
         form-id="edition-delete-form"
     >
         <p class="mb-2">This permanently removes <strong>Vol. {{ $edition->volume->number }}, No. {{ $edition->issue }}</strong> from {{ $journal->name }}.</p>
-        @if ($articles->isNotEmpty())
+        @if ($totalArticles > 0)
             <p class="mb-0 text-muted">
-                All {{ $articles->count() }} article(s) will be unlinked and returned to <strong>accepted</strong> status.
+                All {{ $totalArticles }} article(s) will be unlinked and returned to <strong>accepted</strong> status.
                 @if ($edition->isPublished())
                     Live articles will be removed from the public journal site.
                 @endif
@@ -185,11 +168,5 @@
         title="Add article"
         submit-form="edition-add-article-form"
         submit-label="Add to issue"
-    />
-    <x-admin.ajax-modal
-        id="edition-publish-modal"
-        title="Publish issue"
-        submit-form="edition-publish-form"
-        submit-label="Publish issue"
     />
 @endpush

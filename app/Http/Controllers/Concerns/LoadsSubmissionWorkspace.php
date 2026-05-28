@@ -43,7 +43,7 @@ trait LoadsSubmissionWorkspace
             if (auth()->user()?->can('publish', $submission)) {
                 $editionsForPublish = $submission->journal->editions()
                     ->with('volume')
-                    ->where('status', EditionStatus::Draft)
+                    ->whereIn('status', [EditionStatus::Draft, EditionStatus::Published])
                     ->join('volumes', 'editions.volume_id', '=', 'volumes.id')
                     ->select('editions.*')
                     ->orderByDesc('volumes.number')

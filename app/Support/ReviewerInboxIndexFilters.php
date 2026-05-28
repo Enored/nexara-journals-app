@@ -16,7 +16,7 @@ final class ReviewerInboxIndexFilters
 
     public const SORT_DEADLINE = 'deadline';
 
-    public const SORT_INVITED = 'invited';
+    public const SORT_ASSIGNED = 'assigned';
 
     /** Query param value: show every assignment status (incl. completed). */
     public const STATUS_PARAM_ALL = 'all';
@@ -36,7 +36,7 @@ final class ReviewerInboxIndexFilters
         $allowedSubdomains = $reviewerJournals->pluck('subdomain')->all();
         $statusParam = $request->string('status')->toString();
         $sort = $request->string('sort', self::SORT_DEADLINE)->toString();
-        if (! in_array($sort, [self::SORT_DEADLINE, self::SORT_INVITED], true)) {
+        if (! in_array($sort, [self::SORT_DEADLINE, self::SORT_ASSIGNED], true)) {
             $sort = self::SORT_DEADLINE;
         }
 
@@ -81,10 +81,7 @@ final class ReviewerInboxIndexFilters
         }
 
         if ($filters['status_mode'] === 'active') {
-            $query->whereIn('status', [
-                ReviewAssignmentStatus::Invited,
-                ReviewAssignmentStatus::Accepted,
-            ]);
+            $query->where('status', ReviewAssignmentStatus::Assigned);
         } elseif ($filters['status_mode'] === 'single' && $filters['status'] !== null) {
             $query->where('status', $filters['status']);
         }
@@ -108,7 +105,7 @@ final class ReviewerInboxIndexFilters
      */
     public static function applySort(Builder $query, array $filters): Builder
     {
-        if ($filters['sort'] === self::SORT_INVITED) {
+        if ($filters['sort'] === self::SORT_ASSIGNED) {
             return $query->orderByDesc('invited_at');
         }
 
@@ -187,8 +184,8 @@ final class ReviewerInboxIndexFilters
         if ($filters['sort'] !== self::SORT_DEADLINE) {
             $pills[] = [
                 'key' => 'sort',
-                'label' => $filters['sort'] === self::SORT_INVITED
-                    ? 'Sort: Recently invited'
+                'label' => $filters['sort'] === self::SORT_ASSIGNED
+                    ? 'Sort: Recently assigned'
                     : 'Sort: Deadline',
                 'url' => self::indexUrl(self::without($filters, 'sort')),
             ];

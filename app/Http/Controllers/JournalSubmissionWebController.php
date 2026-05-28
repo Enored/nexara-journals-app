@@ -7,15 +7,14 @@ use App\Models\Submission;
 use App\Support\SubmissionVersionRecorder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class JournalSubmissionWebController extends Controller
 {
-    public function create(): View
+    public function create(): RedirectResponse
     {
-        return view('journal.submit', [
-            'journal' => current_journal(),
-        ]);
+        $journal = current_journal();
+
+        return redirect(platform_route('author.submissions').'?create=1&journal='.$journal->id);
     }
 
     public function store(Request $request): RedirectResponse

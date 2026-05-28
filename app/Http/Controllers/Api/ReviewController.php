@@ -32,61 +32,20 @@ class ReviewController extends Controller
 
     public function accept(Request $request, ReviewAssignment $assignment): JsonResponse
     {
-        $this->authorizeAssignment($request->user()->id, $assignment);
-
-        if ($assignment->status !== ReviewAssignmentStatus::Invited) {
-            return response()->json(['message' => 'Invitation is no longer valid.'], 422);
-        }
-
-        $assignment->update([
-            'status' => ReviewAssignmentStatus::Accepted,
-            'responded_at' => now(),
-        ]);
-
-        WorkflowNotification::query()->create([
-            'user_id' => $assignment->editor_id,
-            'type' => 'reviewer_accepted',
-            'data' => [
-                'submission_id' => $assignment->submission_id,
-                'assignment_id' => $assignment->id,
-            ],
-        ]);
-
-        return response()->json($assignment->fresh());
+        return response()->json(['message' => 'Assignments are mandatory and do not require acceptance.'], 422);
     }
 
     public function decline(Request $request, ReviewAssignment $assignment): JsonResponse
     {
-        $this->authorizeAssignment($request->user()->id, $assignment);
-
-        $data = $request->validate([
-            'reason' => ['nullable', 'string', 'max:5000'],
-        ]);
-
-        $assignment->update([
-            'status' => ReviewAssignmentStatus::Declined,
-            'responded_at' => now(),
-            'decline_reason' => $data['reason'] ?? null,
-        ]);
-
-        WorkflowNotification::query()->create([
-            'user_id' => $assignment->editor_id,
-            'type' => 'reviewer_declined',
-            'data' => [
-                'submission_id' => $assignment->submission_id,
-                'assignment_id' => $assignment->id,
-            ],
-        ]);
-
-        return response()->json($assignment->fresh());
+        return response()->json(['message' => 'Review assignments cannot be declined.'], 422);
     }
 
     public function submit(Request $request, ReviewAssignment $assignment): JsonResponse
     {
         $this->authorizeAssignment($request->user()->id, $assignment);
 
-        if ($assignment->status !== ReviewAssignmentStatus::Accepted) {
-            return response()->json(['message' => 'You must accept the invitation before submitting a review.'], 422);
+        if ($assignment->status !== ReviewAssignmentStatus::Assigned) {
+            return response()->json(['message' => 'This assignment is not active.'], 422);
         }
 
         if ($assignment->review) {

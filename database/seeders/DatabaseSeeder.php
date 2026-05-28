@@ -87,9 +87,10 @@ class DatabaseSeeder extends Seeder
             'submission_id' => $submission->id,
             'reviewer_id' => $reviewer->id,
             'editor_id' => $editor->id,
-            'status' => ReviewAssignmentStatus::Invited,
+            'status' => ReviewAssignmentStatus::Assigned,
             'deadline' => now()->addWeeks(2)->toDateString(),
             'invited_at' => now()->subDay(),
+            'responded_at' => now()->subDay(),
         ]);
     }
 }

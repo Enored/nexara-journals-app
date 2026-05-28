@@ -25,7 +25,6 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JournalSubmissionWebController;
 use App\Http\Controllers\PublicArticleController;
 use App\Http\Controllers\ReviewerTaskController;
-use App\Http\Controllers\ReviewInvitationController;
 use App\Http\Controllers\SubmissionLegacyRedirectController;
 use App\Http\Controllers\SubmissionPublishController;
 use App\Http\Controllers\UserSettingsController;
@@ -34,17 +33,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/articles/{submission}', [PublicArticleController::class, 'show'])->name('journal.articles.show');
 
-Route::get('/review-invitations/{assignment}/accept', [ReviewInvitationController::class, 'accept'])
-    ->middleware(['signed'])
-    ->name('review-invitations.accept');
-
-Route::get('/review-invitations/{assignment}/decline', [ReviewInvitationController::class, 'declineForm'])
-    ->middleware(['signed'])
-    ->name('review-invitations.decline');
-
-Route::post('/review-invitations/{assignment}/decline', [ReviewInvitationController::class, 'decline'])
-    ->middleware(['signed'])
-    ->name('review-invitations.decline.submit');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -120,8 +108,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/review-tasks/{assignment}', [ReviewerTaskController::class, 'show'])->name('review-tasks.show');
     Route::post('/review-tasks/{assignment}', [ReviewerTaskController::class, 'store'])->name('review-tasks.store');
-    Route::post('/review-tasks/{assignment}/accept', [ReviewerTaskController::class, 'accept'])->name('review-tasks.accept');
-    Route::post('/review-tasks/{assignment}/decline', [ReviewerTaskController::class, 'decline'])->name('review-tasks.decline');
 
     Route::middleware('platform.admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [RoleDashboardController::class, 'admin'])->name('dashboard');
@@ -149,7 +135,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('blogs/{blog}', [BlogManageController::class, 'destroy'])->name('blogs.destroy');
 
         Route::get('settings', [PlatformSettingsController::class, 'edit'])->name('settings.edit');
-        Route::put('settings', [PlatformSettingsController::class, 'update'])->name('settings.update');
+        Route::put('settings/branding', [PlatformSettingsController::class, 'updateBranding'])->name('settings.branding.update');
+        Route::put('settings/general', [PlatformSettingsController::class, 'updateGeneral'])->name('settings.general.update');
     });
 
     Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {

@@ -38,11 +38,10 @@ class ReviewerInboxController extends Controller
 
         $statsBase = ReviewAssignment::query()->where('reviewer_id', $user->id);
         $stats = [
-            'invited' => (clone $statsBase)->where('status', ReviewAssignmentStatus::Invited)->count(),
-            'active' => (clone $statsBase)->where('status', ReviewAssignmentStatus::Accepted)->count(),
+            'active' => (clone $statsBase)->where('status', ReviewAssignmentStatus::Assigned)->count(),
             'completed' => (clone $statsBase)->where('status', ReviewAssignmentStatus::Completed)->count(),
             'overdue' => (clone $statsBase)
-                ->whereIn('status', [ReviewAssignmentStatus::Invited, ReviewAssignmentStatus::Accepted])
+                ->where('status', ReviewAssignmentStatus::Assigned)
                 ->where('deadline', '<', now()->toDateString())
                 ->count(),
             'total' => (clone $statsBase)->count(),

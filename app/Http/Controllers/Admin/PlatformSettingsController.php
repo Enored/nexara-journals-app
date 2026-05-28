@@ -18,17 +18,31 @@ class PlatformSettingsController extends Controller
         ]);
     }
 
-    public function update(Request $request, PlatformSettingsService $platformSettings): RedirectResponse
+    public function updateBranding(Request $request, PlatformSettingsService $platformSettings): RedirectResponse
     {
         $data = $request->validate([
             'platform_name' => ['required', 'string', 'max:255'],
-            'maintenance_mode' => ['sometimes', 'boolean'],
+            'logo_text' => ['nullable', 'string', 'max:100'],
+            'show_logo_text_with_image' => ['sometimes', 'boolean'],
         ]);
 
-        $platformSettings->update($data, $request->user());
+        $platformSettings->updateBranding($data, $request->user());
 
         return redirect()
             ->route('admin.settings.edit')
-            ->with('status', 'System settings saved.');
+            ->with('status', 'Branding settings saved.');
+    }
+
+    public function updateGeneral(Request $request, PlatformSettingsService $platformSettings): RedirectResponse
+    {
+        $data = $request->validate([
+            'maintenance_mode' => ['sometimes', 'boolean'],
+        ]);
+
+        $platformSettings->updateGeneral($data, $request->user());
+
+        return redirect()
+            ->route('admin.settings.edit')
+            ->with('status', 'General settings saved.');
     }
 }

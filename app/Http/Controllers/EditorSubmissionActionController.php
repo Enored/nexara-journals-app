@@ -38,9 +38,10 @@ class EditorSubmissionActionController extends Controller
             'round_version' => $submission->version,
             'reviewer_id' => $reviewer->id,
             'editor_id' => $request->user()->id,
-            'status' => ReviewAssignmentStatus::Invited,
+            'status' => ReviewAssignmentStatus::Assigned,
             'deadline' => $data['deadline'],
             'invited_at' => now(),
+            'responded_at' => now(),
         ]);
 
         if ($submission->status === SubmissionStatus::Submitted) {
@@ -49,13 +50,13 @@ class EditorSubmissionActionController extends Controller
 
         WorkflowNotification::query()->create([
             'user_id' => $reviewer->id,
-            'type' => 'review_invited',
+            'type' => 'review_assigned',
             'data' => [
                 'submission_id' => $submission->id,
-                'message' => 'You have a new review invitation.',
+                'message' => 'You have been assigned a new review.',
             ],
         ]);
 
-        return back()->with('status', 'Reviewer invited successfully.');
+        return back()->with('status', 'Reviewer assigned successfully.');
     }
 }

@@ -12,9 +12,8 @@
 @endsection
 
 @section('content')
-    @include('journals.editions.partials.volumes-list', ['journal' => $journal, 'volumes' => $volumes])
-
     <x-dash.list-partial-zone>
+        @include('journals.editions.partials.volumes-list', ['journal' => $journal, 'volumes' => $volumes])
         @include('journals.editions.partials.list')
     </x-dash.list-partial-zone>
 @endsection

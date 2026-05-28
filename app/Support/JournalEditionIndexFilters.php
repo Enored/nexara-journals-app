@@ -159,6 +159,8 @@ final class JournalEditionIndexFilters
      */
     private static function indexUrl(Journal $journal, array $filters): string
     {
-        return platform_route('journal.editions.index', array_merge([$journal], self::queryParams($filters)));
+        $volumeParams = collect(request()->query())->only(['vq', 'vpage'])->all();
+
+        return platform_route('journal.editions.index', array_merge([$journal], self::queryParams($filters), $volumeParams));
     }
 }

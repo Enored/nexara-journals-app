@@ -1,6 +1,27 @@
-@php($volumeCreateModalUrl = platform_route('journal.volumes.create', $journal).'?modal=1')
+@php
+    $volumeCreateModalUrl = platform_route('journal.volumes.create', $journal).'?modal=1';
+    $volumeResetParams = collect(request()->query())->except(['vq', 'vpage'])->all();
+    $volumeResetUrl = platform_route('journal.editions.index', array_merge([$journal], $volumeResetParams));
+@endphp
 
-<x-dash.list-card class="mb-4" item-label="volumes">
+<x-dash.list-card
+    class="mb-4"
+    item-label="volumes"
+    :filter-action="platform_route('journal.editions.index', $journal)"
+    :paginator="$volumes"
+>
+    <x-slot:filterStart>
+        <x-dash.app-search
+            type="search"
+            name="vq"
+            id="volumes-filter-q"
+            :value="$volumeFilters['q'] ?? ''"
+            placeholder="Search number or title…"
+        />
+        @if ($volumeHasActiveFilters ?? false)
+            <x-dash.button variant="secondary" :href="$volumeResetUrl" data-dash-partial-link>Reset</x-dash.button>
+        @endif
+    </x-slot:filterStart>
     <x-slot:filterEnd>
         <x-dash.button
             type="button"
@@ -12,6 +33,14 @@
             New volume
         </x-dash.button>
     </x-slot:filterEnd>
+    @if ($volumeHasActiveFilters ?? false)
+        <x-slot:pills>
+            <x-dash.filter-pills
+                :pills="$volumeActiveFilterPills ?? []"
+                :reset-url="$volumeResetUrl"
+            />
+        </x-slot:pills>
+    @endif
     <x-slot:header>
         <tr class="text-uppercase fs-xxs">
             <th>Volume</th>
@@ -46,19 +75,26 @@
         @empty
             <tr>
                 <td colspan="4" class="p-0">
-                    <x-dash.empty
-                        title="No volumes yet"
-                        description="Create a volume first, then add issues under it."
-                    >
-                        <x-dash.button
-                            type="button"
-                            data-volume-create-open
-                            data-url="{{ $volumeCreateModalUrl }}"
-                            data-journal-name="{{ $journal->name }}"
+                    @if ($volumeHasActiveFilters ?? false)
+                        <x-dash.empty
+                            title="No volumes match"
+                            description="Try adjusting your search."
+                        />
+                    @else
+                        <x-dash.empty
+                            title="No volumes yet"
+                            description="Create a volume first, then add issues under it."
                         >
-                            New volume
-                        </x-dash.button>
-                    </x-dash.empty>
+                            <x-dash.button
+                                type="button"
+                                data-volume-create-open
+                                data-url="{{ $volumeCreateModalUrl }}"
+                                data-journal-name="{{ $journal->name }}"
+                            >
+                                New volume
+                            </x-dash.button>
+                        </x-dash.empty>
+                    @endif
                 </td>
             </tr>
         @endforelse

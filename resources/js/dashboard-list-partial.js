@@ -31,59 +31,72 @@ function bindListPartialRoot(root) {
 }
 
 function bindFilterForm(root) {
-    const form = root.querySelector('[data-dash-auto-filter]');
-    if (!form) {
+    const forms = root.querySelectorAll('[data-dash-auto-filter]');
+    if (!forms.length) {
         return;
     }
 
     let debounceTimer = null;
 
-    const loadFromForm = (resetPage = true) => {
-        const url = buildFormUrl(form, resetPage);
+    const loadFromForms = (resetPage = true) => {
+        const url = buildCombinedFormUrl(root, resetPage);
         loadListPartial(root, url, { push: true });
     };
 
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        loadFromForm(true);
-    });
-
-    form.querySelectorAll('input[type="search"]').forEach((input) => {
-        input.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => loadFromForm(true), DEBOUNCE_MS);
+    forms.forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            loadFromForms(true);
         });
-    });
 
-    form.querySelectorAll('select').forEach((select) => {
-        select.addEventListener('change', () => loadFromForm(true));
+        form.querySelectorAll('input[type="search"]').forEach((input) => {
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => loadFromForms(true), DEBOUNCE_MS);
+            });
+        });
+
+        form.querySelectorAll('select').forEach((select) => {
+            select.addEventListener('change', () => loadFromForms(true));
+        });
     });
 }
 
-function buildFormUrl(form, resetPage) {
-    const url = new URL(form.action, window.location.origin);
-    const data = new FormData(form);
+function buildCombinedFormUrl(root, resetPage) {
+    const forms = root.querySelectorAll('[data-dash-auto-filter]');
+    const firstForm = forms[0];
+    const url = new URL(firstForm.action, window.location.origin);
 
     url.search = '';
-    for (const [key, value] of data.entries()) {
-        if (typeof value === 'string' && value !== '') {
-            url.searchParams.append(key, value);
+
+    forms.forEach((form) => {
+        const data = new FormData(form);
+        for (const [key, value] of data.entries()) {
+            if (typeof value === 'string' && value !== '') {
+                url.searchParams.append(key, value);
+            }
         }
-    }
+    });
 
     if (resetPage) {
         url.searchParams.delete('page');
+        url.searchParams.delete('vpage');
     }
 
     return url.toString();
 }
 
 async function loadListPartial(root, url, { push = true }) {
-    const searchInput = root.querySelector('input[type="search"]');
     const active = document.activeElement;
-    const restoreFocus = searchInput && root.contains(active) && active === searchInput
-        ? { start: searchInput.selectionStart, end: searchInput.selectionEnd }
-        : null;
+    let restoreFocus = null;
+    if (active && active.matches('input[type="search"]') && root.contains(active)) {
+        restoreFocus = {
+            id: active.id || null,
+            name: active.name || null,
+            start: active.selectionStart,
+            end: active.selectionEnd,
+        };
+    }
 
     root.classList.add('opacity-50', 'pe-none');
 
@@ -116,7 +129,13 @@ async function loadListPartial(root, url, { push = true }) {
         bindFilterForm(root);
 
         if (restoreFocus) {
-            const nextSearch = root.querySelector('input[type="search"]');
+            let nextSearch = null;
+            if (restoreFocus.id) {
+                nextSearch = root.querySelector(`#${CSS.escape(restoreFocus.id)}`);
+            } else if (restoreFocus.name) {
+                nextSearch = root.querySelector(`input[name="${CSS.escape(restoreFocus.name)}"]`);
+            }
+            nextSearch = nextSearch || root.querySelector('input[type="search"]');
             if (nextSearch) {
                 nextSearch.focus();
                 try {
