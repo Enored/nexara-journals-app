@@ -1,20 +1,48 @@
 import React from 'react';
-import { Icon } from './icons';
+import { ArrowRight, Rss } from 'lucide-react';
+import { useJournalData } from './data-context';
 
 // Issue archive timeline + journal sidebar (editorial board, stats, signals).
 
 export const IssueArchive = ({ onOpenIssue }) => {
-  const issues = window.ISSUES;
+  const { issues, journal } = useJournalData();
+  const totalIssues = journal?.totalIssues ?? issues.length;
+  const foundedYear = journal?.founded;
+  const eyebrowText = foundedYear
+    ? `Archive · ${totalIssues} ${totalIssues === 1 ? 'issue' : 'issues'} since ${foundedYear}`
+    : `Archive · ${totalIssues} ${totalIssues === 1 ? 'issue' : 'issues'}`;
+
+  if (issues.length === 0) {
+    return (
+      <section className="archive">
+        <div className="container">
+          <div className="head">
+            <div>
+              <div className="eyebrow archive-eyebrow">Archive</div>
+              <h2>Issue archive</h2>
+            </div>
+          </div>
+          <p style={{ color: 'var(--muted)', fontStyle: 'italic', margin: 0 }}>
+            No published issues yet. Check back once the first edition goes live.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="archive" style={{ backgroundColor: "rgb(246, 246, 246)" }}>
-      <div className="container" style={{ color: "rgb(255, 255, 255)" }}>
+    <section className="archive">
+      <div className="container">
         <div className="head">
           <div>
-            <div className="eyebrow" style={{ marginBottom: 14 }}>Archive · 73 issues since 2008</div>
+            <div className="eyebrow archive-eyebrow">{eyebrowText}</div>
             <h2>Issue archive</h2>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
-            <button className="btn ghost small">All 73 issues →</button>
+            <button type="button" className="btn ghost small">
+              All {totalIssues} {totalIssues === 1 ? 'issue' : 'issues'}
+              <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
+            </button>
           </div>
         </div>
 
@@ -22,7 +50,7 @@ export const IssueArchive = ({ onOpenIssue }) => {
           <div className="rail"></div>
           <div className="issues">
             {issues.map((iss) =>
-            <button key={`${iss.v}-${iss.i}`} className={`issue ${iss.current ? 'current' : ''}`} onClick={() => onOpenIssue(iss)}>
+            <button key={iss.id ?? `${iss.v}-${iss.i}`} className={`issue ${iss.current ? 'current' : ''}`} onClick={() => onOpenIssue(iss)}>
                 <div className="cover">
                   <div>
                     <div className="vi">
@@ -31,7 +59,7 @@ export const IssueArchive = ({ onOpenIssue }) => {
                     </div>
                   </div>
                   <div className="topic">{iss.topic}</div>
-                  <div className="meta">{iss.articles} articles {iss.current ? '· In progress' : '· Complete'}</div>
+                  <div className="meta">{iss.articles} {iss.articles === 1 ? 'article' : 'articles'} {iss.current ? '· In progress' : '· Complete'}</div>
                 </div>
                 <div className="dot"></div>
                 <div className="yr">{iss.month} {iss.year}{iss.current ? ' · current' : ''}</div>
@@ -45,7 +73,7 @@ export const IssueArchive = ({ onOpenIssue }) => {
 };
 
 export const Sidebar = () => {
-  const j = window.JOURNAL;
+  const { journal: j, subjects } = useJournalData();
   const board = [j.editorChief, ...j.editors];
 
   return (
@@ -74,13 +102,16 @@ export const Sidebar = () => {
             </div>
           </div>
         )}
-        <a href="#" style={{ marginTop: 14, display: 'inline-block', fontSize: 14 }}>View full board (38) →</a>
+        <a href="#" className="plain" style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
+          View full board (38)
+          <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
+        </a>
       </section>
 
       <section>
         <h3>Subjects</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {window.SUBJECTS.map((s) =>
+          {subjects.map((s) =>
           <a key={s} href="#" style={{
             borderBottom: '1px solid var(--rule)',
             padding: '10px 0',
@@ -107,7 +138,9 @@ export const Sidebar = () => {
           <button>Subscribe</button>
         </div>
         <div style={{ display: 'flex', gap: 14, fontSize: 13, color: 'var(--muted)', fontFamily: '"JetBrains Mono", monospace', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-          <a href="#" style={{ borderBottom: 'none', display: 'inline-flex', gap: 6, alignItems: 'center' }}><Icon name="rss" size={14} /> RSS</a>
+          <a href="#" style={{ borderBottom: 'none', display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+            <Rss size={14} strokeWidth={1.5} aria-hidden /> RSS
+          </a>
           <span>·</span>
           <a href="#" style={{ borderBottom: 'none' }}>Mastodon</a>
           <span>·</span>

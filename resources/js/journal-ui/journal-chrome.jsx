@@ -1,52 +1,79 @@
 import React from 'react';
-import { Icon } from './icons';
+import { ArrowRight, Bell, Search, User } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
+import { useJournalData } from './data-context';
+import { JournalAuthMenu } from './journal-auth-menu';
 
 // Top utility bar + wordmark header + journal masthead + sub-nav.
 
-export const UtilityBar = ({ onSearch, onNav }) =>
-<div className="util">
-    <div className="container">
-      <div className="left">
-        <a href="#" onClick={(e) => {e.preventDefault();onNav('home');}}>Nexara Platform</a>
-        <span className="pipe"></span>
-        <a href="#" className="hide-sm">Institutional access</a>
-        <a href="#" className="hide-sm">Librarians</a>
-        <a href="#" className="hide-sm">Help</a>
-      </div>
-      <div className="right">
-        <a href="#" onClick={(e) => {e.preventDefault();onNav('home');}}>Browse all journals</a>
-        <a href="#">For authors</a>
-        <a href="#">For reviewers</a>
-        <span className="pipe"></span>
-        <a href="#">Sign in</a>
+export const UtilityBar = ({ platformName, onNav }) => {
+  const { platform } = usePage().props;
+  const name = platformName ?? platform?.name ?? 'Nexara';
+
+  const goHome = (e) => {
+    e.preventDefault();
+    onNav(e);
+  };
+
+  return (
+    <div className="util">
+      <div className="container">
+        <div className="left">
+          <a href={platform.urls.home} className="plain" onClick={goHome}>{name} Platform</a>
+          <span className="pipe"></span>
+          <a href="#" className="hide-sm plain">Institutional access</a>
+          <a href="#" className="hide-sm plain">Librarians</a>
+          <a href="#" className="hide-sm plain">Help</a>
+        </div>
+        <div className="right">
+          <a href={platform.urls.home} className="plain" onClick={goHome}>Browse all journals</a>
+          <span className="pipe"></span>
+          <JournalAuthMenu />
+        </div>
       </div>
     </div>
-  </div>;
+  );
+};
 
 
-export const WordmarkBar = ({ onNav, view }) =>
-<div className="wordmark-bar" style={{ backgroundColor: "rgb(255, 255, 255)" }}>
-    <div className="container">
-      <a href="#" className="wordmark plain" onClick={(e) => {e.preventDefault();onNav('home');}}>
-        Nexara <span className="dot"></span>
-        <span className="sub">Research Press</span>
-      </a>
-      <nav className="main-nav">
-        <a href="#" className={view === 'home' ? 'active' : ''} onClick={(e) => {e.preventDefault();onNav('home');}}>Journal home</a>
-        <a href="#">Current issue</a>
-        <a href="#">Archive</a>
-        <a href="#">Submit</a>
-        <a href="#">Editorial board</a>
-        <span className="divider"></span>
-        <a href="#"><Icon name="bell" size={16} /></a>
-        <a href="#"><Icon name="user" size={16} /></a>
-      </nav>
+export const WordmarkBar = ({ platformName, onNav, view }) => {
+  const { platform, auth } = usePage().props;
+  const name = platformName ?? platform?.name ?? 'Nexara';
+
+  const goHome = (e) => {
+    e.preventDefault();
+    onNav(e);
+  };
+
+  return (
+    <div className="wordmark-bar" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
+      <div className="container">
+        <a href="/" className="wordmark plain" onClick={goHome}>
+          {name} <span className="dot"></span>
+          <span className="sub">Research Press</span>
+        </a>
+        <nav className="main-nav">
+          <a href="/" className={view === 'home' ? 'active' : ''} onClick={goHome}>Journal home</a>
+          <a href="#" className="plain">Current issue</a>
+          <a href="#" className="plain">Archive</a>
+          <a href="#" className="plain">Submit</a>
+          <a href="#" className="plain">Editorial board</a>
+          <span className="divider"></span>
+          <a href="#" className="plain" aria-label="Alerts"><Bell size={16} strokeWidth={1.5} aria-hidden /></a>
+          {!auth?.user && (
+            <a href={platform.urls.login} className="plain" aria-label="Sign in">
+              <User size={16} strokeWidth={1.5} aria-hidden />
+            </a>
+          )}
+        </nav>
+      </div>
     </div>
-  </div>;
+  );
+};
 
 
 export const JournalMasthead = ({ onSubmit }) => {
-  const j = window.JOURNAL;
+  const { journal: j } = useJournalData();
   return (
     <section className="masthead" style={{ backgroundColor: "rgb(255, 255, 255)" }}>
       <div className="container">
@@ -86,10 +113,11 @@ export const JournalMasthead = ({ onSubmit }) => {
             <div className="side-card dark">
               <h3>For authors</h3>
               <p style={{ fontSize: 15, lineHeight: 1.5, margin: '0 0 16px', color: '#cfd5e6' }}>
-                Submissions open year-round. Median time to first decision is <strong style={{ color: 'var(--paper)' }}>31 days</strong>; we do not charge article processing fees.
+                Submissions open year-round. Median time to first decision is <strong style={{ color: '#fff' }}>31 days</strong>; we do not charge article processing fees.
               </p>
-              <button className="btn block" onClick={onSubmit} style={{ background: 'var(--paper)', color: 'var(--ink)', borderColor: 'var(--paper)' }}>
-                Submit a manuscript <span className="arrow">→</span>
+              <button type="button" className="btn block side-card-submit" onClick={onSubmit}>
+                Submit a manuscript
+                <ArrowRight size={18} strokeWidth={1.5} aria-hidden />
               </button>
               <div className="link-list" style={{ marginTop: 18 }}>
                 <a href="#">Author guidelines <span className="num">.PDF</span></a>
@@ -98,7 +126,7 @@ export const JournalMasthead = ({ onSubmit }) => {
               </div>
             </div>
 
-            <div className="side-card">
+            <div className="side-card recognised">
               <h3>Recognised by</h3>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: 13.5, lineHeight: 1.8, color: 'var(--ink-2)' }}>
                 <li>· Indexed in Scopus, Web of Science, PubMed</li>
@@ -132,7 +160,7 @@ export const SubNav = ({ query, setQuery, onSearch, view, onNav }) =>
         value={query}
         onChange={(e) => setQuery(e.target.value)} />
       
-        <button type="submit"><Icon name="search" size={14} /></button>
+        <button type="submit" aria-label="Search"><Search size={14} strokeWidth={1.5} aria-hidden /></button>
       </form>
     </div>
   </div>;

@@ -1,5 +1,12 @@
 import React from 'react';
-import { Icon } from './icons';
+import {
+  BellRing,
+  Bookmark,
+  BookmarkCheck,
+  Download,
+  Quote,
+  Share2,
+} from 'lucide-react';
 
 // Article detail screen (when user clicks an article).
 
@@ -45,13 +52,26 @@ export const ArticleDetail = ({ article, onBack, onCite, onSave, saved }) => {
           </div>
 
           <div className="top-actions">
-            <button className="btn"><Icon name="download" size={16} /> Download PDF</button>
-            <button className="btn ghost" onClick={() => onCite(a)}><Icon name="quote" size={16} /> Cite</button>
-            <button className="btn ghost" onClick={() => onSave(a)}>
-              <Icon name={saved ? 'saved' : 'save'} size={16} /> {saved ? 'Saved' : 'Save to library'}
+            <button type="button" className="btn">
+              <Download size={16} strokeWidth={1.5} aria-hidden /> Download PDF
             </button>
-            <button className="btn ghost"><Icon name="share" size={16} /> Share</button>
-            <button className="btn ghost"><Icon name="alert" size={16} /> Track citations</button>
+            <button type="button" className="btn ghost" onClick={() => onCite(a)}>
+              <Quote size={16} strokeWidth={1.5} aria-hidden /> Cite
+            </button>
+            <button type="button" className="btn ghost" onClick={() => onSave(a)}>
+              {saved ? (
+                <BookmarkCheck size={16} strokeWidth={1.5} aria-hidden />
+              ) : (
+                <Bookmark size={16} strokeWidth={1.5} aria-hidden />
+              )}
+              {saved ? 'Saved' : 'Save to library'}
+            </button>
+            <button type="button" className="btn ghost">
+              <Share2 size={16} strokeWidth={1.5} aria-hidden /> Share
+            </button>
+            <button type="button" className="btn ghost">
+              <BellRing size={16} strokeWidth={1.5} aria-hidden /> Track citations
+            </button>
           </div>
         </div>
       </section>

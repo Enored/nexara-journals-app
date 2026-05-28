@@ -1,22 +1,37 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { router } from '@inertiajs/react';
+import { ArrowRight } from 'lucide-react';
 import { ArticleList, CiteModal } from './article-list';
 import { IssueArchive, Footer, Sidebar } from './archive-sidebar';
-import { ArticleDetail } from './article-detail';
-import { JournalMasthead, OpenAccessStory, SubNav, UtilityBar, WordmarkBar } from './journal-chrome';
+import { JournalMasthead, OpenAccessStory, SubNav } from './journal-chrome';
+import { JournalSiteHeader } from './journal-site-header';
+import { JournalDataProvider, useJournalData } from './data-context';
 
-export default function App() {
-  const [view, setView] = useState('home'); // 'home' | 'article' | 'search'
-  const [currentArticle, setCurrentArticle] = useState(null);
+export default function App({ journal, articles, issues, subjects }) {
+  const data = useMemo(
+    () => ({ journal, articles, issues, subjects }),
+    [journal, articles, issues, subjects],
+  );
+
+  return (
+    <JournalDataProvider value={data}>
+      <AppShell />
+    </JournalDataProvider>
+  );
+}
+
+function AppShell() {
+  const { articles, journal } = useJournalData();
+  const [view, setView] = useState('home'); // 'home' | 'search'
   const [citeArticle, setCiteArticle] = useState(null);
   const [saved, setSaved] = useState(new Set());
   const [toast, setToast] = useState(null);
   const [query, setQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Scroll to top on view change
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [view, currentArticle]);
+  }, [view]);
 
   const showToast = (msg) => {
     setToast(msg);
@@ -24,8 +39,7 @@ export default function App() {
   };
 
   const handleOpenArticle = (a) => {
-    setCurrentArticle(a);
-    setView('article');
+    router.visit(`/articles/${a.id}`);
   };
 
   const handleSave = (a) => {
@@ -45,12 +59,10 @@ export default function App() {
   const handleSearch = (q) => {
     setSearchTerm(q.trim());
     setView('search');
-    setCurrentArticle(null);
   };
 
   const handleNav = (v) => {
     setView(v);
-    setCurrentArticle(null);
     setSearchTerm('');
     setQuery('');
   };
@@ -73,8 +85,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <UtilityBar onNav={handleNav} />
-      <WordmarkBar onNav={handleNav} view={view} />
+      <JournalSiteHeader view={view} onNav={handleNav} />
 
       {view === 'home' &&
       <>
@@ -89,10 +100,14 @@ export default function App() {
                 <div>
                   <div className="section-head">
                     <div>
-                      <div className="eyebrow" style={{ marginBottom: 8 }}>Current issue · Vol. 18 · Iss. 2 · May 2026</div>
+                      <div className="eyebrow" style={{ marginBottom: 8 }}>
+                        Current issue · Vol. {journal.currentVolume} · Iss. {journal.currentIssue} · {journal.currentDate}
+                      </div>
                       <h2>Articles in this issue</h2>
                     </div>
-                    <div className="meta">14 articles · published May 2026</div>
+                    <div className="meta">
+                      {journal.currentArticlesCount ?? articles.length} {(journal.currentArticlesCount ?? articles.length) === 1 ? 'article' : 'articles'} · published {journal.currentDate}
+                    </div>
                   </div>
 
                   <ArticleList
@@ -111,7 +126,10 @@ export default function App() {
                         See all 1,247 articles in the archive
                       </div>
                     </div>
-                    <button className="btn" onClick={() => showToast('Archive (demo)')} style={{ backgroundColor: "rgb(11, 26, 54)", color: "rgb(255, 255, 255)" }}>View full archive <span className="arrow">→</span></button>
+                    <button type="button" className="btn" onClick={() => showToast('Archive (demo)')} style={{ backgroundColor: 'rgb(11, 26, 54)', color: 'rgb(255, 255, 255)' }}>
+                      View full archive
+                      <ArrowRight size={18} strokeWidth={1.5} aria-hidden />
+                    </button>
                   </div>
                 </div>
 
@@ -124,16 +142,6 @@ export default function App() {
         </>
       }
 
-      {view === 'article' && currentArticle &&
-      <ArticleDetail
-        article={currentArticle}
-        onBack={() => handleNav('home')}
-        onCite={handleCite}
-        onSave={handleSave}
-        saved={saved.has(currentArticle.id)} />
-
-      }
-
       {view === 'search' &&
       <>
           <SubNav query={query} setQuery={setQuery} onSearch={handleSearch} view={view} onNav={handleNav} />
@@ -141,9 +149,9 @@ export default function App() {
             <div className="container">
               <div className="head">
                 <h2>Search results for <em>"{searchTerm}"</em></h2>
-                <span className="count">{searchFilter ? window.ARTICLES.filter(searchFilter).length : 0} matches</span>
+                <span className="count">{searchFilter ? articles.filter(searchFilter).length : 0} matches</span>
               </div>
-              {searchFilter && window.ARTICLES.filter(searchFilter).length === 0 &&
+              {searchFilter && articles.filter(searchFilter).length === 0 &&
             <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--muted)', fontStyle: 'italic', fontSize: 17 }}>
                   No results. Try <a href="#" onClick={(e) => {e.preventDefault();handleSearch('memory');setQuery('memory');}}>memory</a>,
                   {' '}<a href="#" onClick={(e) => {e.preventDefault();handleSearch('predictive');setQuery('predictive');}}>predictive</a>,

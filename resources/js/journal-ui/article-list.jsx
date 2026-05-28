@@ -1,4 +1,5 @@
 import React from 'react';
+import { useJournalData } from './data-context';
 
 // Article list with tabs, filters, saving, citation modal.
 
@@ -76,7 +77,8 @@ export const ArticleRow = ({ a, index, saved, onOpen, onSave, onCite }) => {
 
 export const ArticleList = ({ onOpen, onCite, saved, onSave, defaultSort = 'latest', filter, articles }) => {
   const [sort, setSort] = React.useState(defaultSort);
-  const list = articles || window.ARTICLES;
+  const { articles: contextArticles } = useJournalData();
+  const list = articles || contextArticles;
 
   const sorted = React.useMemo(() => {
     const copy = [...list];
@@ -149,9 +151,10 @@ export const CiteModal = ({ article, onClose }) => {
         <pre className="cite-body" style={{ whiteSpace: 'pre-wrap', margin: 0, fontFamily: fmt === 'bibtex' || fmt === 'ris' ? '"JetBrains Mono", monospace' : 'var(--serif)' }}>
           {formats[fmt]}
         </pre>
-        <div style={{ display: 'flex', gap: 12, marginTop: 18 }}>
-          <button className="btn" onClick={() => {navigator.clipboard?.writeText(formats[fmt]);}}>Copy to clipboard</button>
-          <button className="btn ghost" onClick={() => alert('Export to reference manager (demo)')}>Send to Zotero / Mendeley</button>
+        <div style={{ marginTop: 18 }}>
+          <button type="button" className="btn" onClick={() => { navigator.clipboard?.writeText(formats[fmt]); }}>
+            Copy to clipboard
+          </button>
         </div>
       </div>
     </div>);
