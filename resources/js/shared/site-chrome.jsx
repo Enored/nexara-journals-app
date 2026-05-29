@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, User } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { router, usePage } from '@inertiajs/react';
 import { JournalAuthMenu } from '../journal-ui/journal-auth-menu';
 
@@ -64,7 +64,7 @@ const JOURNAL_NAV = [
 ];
 
 export const WordmarkBar = ({ view = 'home', onNav }) => {
-  const { platform, auth, siteContext, journal } = usePage().props;
+  const { platform, siteContext, journal } = usePage().props;
   const name = platform?.name ?? 'Nexara';
   const isJournal = siteContext === 'journal';
   const wordmarkSub = isJournal && journal?.name ? journal.name : 'Journals';
@@ -124,11 +124,6 @@ export const WordmarkBar = ({ view = 'home', onNav }) => {
           <a href="#" className="plain" aria-label="Alerts">
             <Bell size={16} strokeWidth={1.5} aria-hidden />
           </a>
-          {!auth?.user && (
-            <a href={platform.urls.login} className="plain" aria-label="Sign in">
-              <User size={16} strokeWidth={1.5} aria-hidden />
-            </a>
-          )}
         </nav>
       </div>
     </div>
