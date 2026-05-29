@@ -34,19 +34,7 @@ class PlatformHomePayload
                 ->where('status', SubmissionStatus::Published)
                 ->count());
 
-            $abbr = self::journalAbbreviation($journal);
-
-            return [
-                'id' => $journal->id,
-                'abbr' => $abbr,
-                'name' => $journal->name,
-                'field' => Str::limit($journal->description ?: 'Open-access research', 80),
-                'est' => 2010,
-                'impact' => '—',
-                'articles' => $publishedCount,
-                'url' => journal_front_url($journal),
-                'flagship' => $index === 0,
-            ];
+            return JournalsDirectoryPayload::mapJournal($journal, $index);
         });
 
         $disciplines = [
@@ -109,7 +97,7 @@ class PlatformHomePayload
         ];
     }
 
-    private static function journalAbbreviation(Journal $journal): string
+    public static function journalAbbreviation(Journal $journal): string
     {
         $words = preg_split('/\s+/', trim($journal->name)) ?: [];
         if (count($words) >= 2) {

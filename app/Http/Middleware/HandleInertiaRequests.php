@@ -54,7 +54,8 @@ class HandleInertiaRequests extends Middleware
                 'name' => platform_name(),
                 'urls' => [
                     'home' => platform_url('/'),
-                    'journals' => platform_url('/#journals'),
+                    'journals' => platform_route('journals.index'),
+                    'articles' => platform_route('articles.index'),
                     'blogs' => platform_route('blogs.index'),
                     'about' => platform_route('about'),
                     'login' => platform_route('login'),

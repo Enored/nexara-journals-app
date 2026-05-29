@@ -50,6 +50,7 @@ export const UtilityBar = () => {
 const PLATFORM_NAV = [
   { key: 'home', label: 'Home', href: (urls) => urls.home },
   { key: 'journals', label: 'Journals', href: (urls) => urls.journals },
+  { key: 'articles', label: 'Articles', href: (urls) => urls.articles },
   { key: 'blogs', label: 'Blogs', href: (urls) => urls.blogs },
   { key: 'about', label: 'About', href: (urls) => urls.about },
 ];

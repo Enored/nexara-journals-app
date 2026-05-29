@@ -16,6 +16,7 @@ class RedirectPlatformRoutesToApex
         '/login',
         '/register',
         '/blogs',
+        '/journals',
         '/about',
         '/dashboard',
         '/settings',
@@ -39,6 +40,10 @@ class RedirectPlatformRoutesToApex
         }
 
         if ($request->isMethod('POST') && $path === '/logout') {
+            return $this->redirectToApex($request);
+        }
+
+        if ($path === '/articles') {
             return $this->redirectToApex($request);
         }
 

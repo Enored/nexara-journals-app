@@ -22,7 +22,9 @@ use App\Http\Controllers\DashboardHubController;
 use App\Http\Controllers\EditorDecisionController;
 use App\Http\Controllers\EditorSubmissionActionController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PublicArticlesDirectoryController;
 use App\Http\Controllers\PublicBlogController;
+use App\Http\Controllers\PublicJournalsController;
 use App\Http\Controllers\JournalSubmissionWebController;
 use App\Http\Controllers\PublicArticleController;
 use App\Http\Controllers\ReviewerTaskController;
@@ -32,6 +34,8 @@ use App\Http\Controllers\UserSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/journals', [PublicJournalsController::class, 'index'])->name('journals.index');
+Route::get('/articles', [PublicArticlesDirectoryController::class, 'index'])->name('articles.index');
 Route::get('/blogs', [PublicBlogController::class, 'index'])->name('blogs.index');
 Route::get('/blogs/{slug}', [PublicBlogController::class, 'show'])->name('blogs.show');
 Route::get('/about', fn () => \Inertia\Inertia::render('Platform/About', [
