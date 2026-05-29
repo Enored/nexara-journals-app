@@ -7,10 +7,10 @@ import {
     LatestResearch,
     NexaraNotes,
     PlatformHero,
-    SubjectsBand,
+    // SubjectsBand,
 } from './platform-home';
 
-export default function PlatformApp({ press, journals, disciplines, featured, latest, posts }) {
+export default function PlatformApp({ press, journals, featured, latest, posts }) {
     const [query, setQuery] = useState('');
 
     const doSearch = (override) => {
@@ -33,7 +33,7 @@ export default function PlatformApp({ press, journals, disciplines, featured, la
 
             <JournalShelf journals={journals} />
 
-            <SubjectsBand disciplines={disciplines} />
+            {/* <SubjectsBand disciplines={disciplines} /> */}
 
             <LatestResearch latest={latest} />
 

@@ -15,35 +15,21 @@ class PlatformHomePayload
      */
     public static function build(Collection $journals, Collection $latestArticles): array
     {
-        $journalCount = $journals->count();
         $articleCount = Submission::query()
             ->where('status', SubmissionStatus::Published)
             ->count();
 
         $press = [
             'name' => platform_name(),
-            'journals' => $journalCount,
             'articles' => $articleCount > 0 ? number_format($articleCount) : '0',
             'founded' => 2003,
             'downloads12mo' => '11.6M',
             'countries' => 168,
         ];
 
-        $journalsPayload = $journals->values()->map(function (Journal $journal, int $index) {
-            $publishedCount = (int) ($journal->published_articles_count ?? $journal->submissions()
-                ->where('status', SubmissionStatus::Published)
-                ->count());
-
-            return JournalsDirectoryPayload::mapJournal($journal, $index);
-        });
-
-        $disciplines = [
-            ['name' => 'Neuroscience', 'count' => max(1, (int) ceil($journalCount * 0.3))],
-            ['name' => 'Cognitive science', 'count' => max(1, (int) ceil($journalCount * 0.35))],
-            ['name' => 'Computational', 'count' => max(1, (int) ceil($journalCount * 0.25))],
-            ['name' => 'Clinical', 'count' => max(1, (int) ceil($journalCount * 0.15))],
-            ['name' => 'Methods & meta-science', 'count' => max(1, (int) ceil($journalCount * 0.2))],
-        ];
+        $journalsPayload = $journals->values()->map(
+            fn (Journal $journal, int $index) => JournalsDirectoryPayload::mapJournal($journal, $index),
+        );
 
         $latestPayload = $latestArticles->map(function (Submission $article) {
             $journal = $article->journal;
@@ -89,7 +75,6 @@ class PlatformHomePayload
             'pageTitle' => platform_name().' — Open research in mind, brain & behaviour',
             'press' => $press,
             'journals' => $journalsPayload,
-            'disciplines' => $disciplines,
             'featured' => $featured,
             'latest' => $latestPayload,
             'posts' => BlogPayload::forPublic(),

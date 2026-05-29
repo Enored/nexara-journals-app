@@ -120,19 +120,22 @@
 .psection .head .sub { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
 .psection .head p.lede { font-size: 16px; color: var(--ink-3); margin: 8px 0 0; max-width: 50ch; font-style: italic; }
 
-.psection-journals .head {
+.psection-journals .head,
+.psection-latest .head {
   display: block;
   border-bottom: none;
   padding-bottom: 0;
   margin-bottom: 36px;
 }
-.psection-journals .head-title-row {
+.psection-journals .head-title-row,
+.psection-latest .head-title-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 24px;
 }
-.psection-journals .head-link {
+.psection-journals .head-link,
+.psection-latest .head-link {
   flex-shrink: 0;
   font-family: "JetBrains Mono", monospace;
   font-size: 12px;
@@ -142,6 +145,18 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+.psection-journals .head-title-row h2,
+.psection-latest .head-title-row h2 {
+  font-family: var(--display);
+  font-size: clamp(28px, 2.8vw, 40px);
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  margin: 0;
+}
+
+.psection-journals {
+  border-bottom: 1px solid var(--rule);
 }
 
 /* ---------- Featured journals shelf ---------- */
@@ -203,13 +218,14 @@
 .subject-cell:hover .sname { color: var(--ink-2); }
 .subject-cell .scount { font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 
-/* ---------- Latest research (cross journal) ---------- */
+/* ---------- Latest articles (cross journal) ---------- */
 .latest-row {
   display: grid; grid-template-columns: 1fr 200px; gap: 28px;
   padding-block: 18px; border-bottom: 1px solid var(--rule);
-  cursor: pointer; align-items: start; transition: background .15s;
+  cursor: pointer; align-items: start; background: transparent;
+  transition: background .12s;
 }
-.latest-row:hover { background: var(--paper-2); }
+.latest-row:hover { background: var(--paper-3); }
 .latest-row .tags { display: flex; gap: 12px; align-items: center; margin-bottom: 7px; flex-wrap: wrap; }
 .latest-row h3 { font-family: var(--display); font-size: 19px; line-height: 1.22; font-weight: 500; margin: 0 0 6px; letter-spacing: -0.004em; }
 .latest-row:hover h3 { color: var(--ink-2); }
@@ -223,8 +239,8 @@
 .notes-band { background: var(--ink); color: var(--paper); padding-block: var(--section-y); }
 .notes-band .head {
   display: block;
-  border-bottom: none;
-  padding-bottom: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  padding-bottom: 18px;
   margin-bottom: 36px;
 }
 .notes-band .head .sub {

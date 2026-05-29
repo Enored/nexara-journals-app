@@ -25,6 +25,7 @@ class HomeController extends Controller
             ->where('is_active', true)
             ->withCount(['submissions as published_articles_count' => fn ($q) => $q->where('status', SubmissionStatus::Published)])
             ->orderBy('name')
+            ->limit(12)
             ->get();
 
         $latestArticles = Submission::query()

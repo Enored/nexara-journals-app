@@ -16,7 +16,7 @@ export function PlatformHero({ press, query, setQuery, onSearch, featured }) {
                             Open research in the science of <em>mind, brain & behaviour.</em>
                         </h1>
                         <p className="lead">
-                            {press.journals} peer-reviewed journals. {press.articles} articles.{' '}
+                            Peer-reviewed journals. {press.articles} articles.{' '}
                             <span className="oa-word">Free for everyone to read — and free for everyone to publish.</span>
                         </p>
 
@@ -37,7 +37,7 @@ export function PlatformHero({ press, query, setQuery, onSearch, featured }) {
                                 Search
                             </button>
                         </form>
-                        <div className="search-suggest">
+                        {/* <div className="search-suggest">
                             <span>Try:</span>
                             <a
                                 href="#"
@@ -61,12 +61,12 @@ export function PlatformHero({ press, query, setQuery, onSearch, featured }) {
                             >
                                 reproducibility
                             </a>
-                        </div>
+                        </div> */}
 
                         <div className="phero-stats">
                             <div className="s">
-                                <span className="v">{press.journals}</span>
-                                <span className="l">Journals</span>
+                                <span className="v">{press.articles}</span>
+                                <span className="l">Articles</span>
                             </div>
                             <div className="s">
                                 <span className="v">{press.downloads12mo}</span>
@@ -105,14 +105,13 @@ export function PlatformHero({ press, query, setQuery, onSearch, featured }) {
 
 export function JournalShelf({ journals }) {
     const { platform } = usePage().props;
-    const count = journals.length;
 
     return (
         <section className="psection psection-journals" id="journals">
             <div className="container-wide">
                 <div className="head">
                     <div className="sub" style={{ marginBottom: 10 }}>
-                        {count} {count === 1 ? 'journal' : 'journals'} · all diamond open access
+                        All diamond open access
                     </div>
                     <div className="head-title-row">
                         <h2>Featured journals</h2>
@@ -120,7 +119,7 @@ export function JournalShelf({ journals }) {
                             href={platform.urls.journals}
                             className="plain head-link"
                         >
-                            Browse all {count}
+                            Browse all
                             <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
                         </a>
                     </div>
@@ -135,11 +134,6 @@ export function JournalShelf({ journals }) {
                             style={{ textDecoration: 'none', color: 'inherit' }}
                         >
                             <div className="jcover">
-                                {j.flagship && <span className="flagship-pill">Flagship</span>}
-                                <div className="jtop">
-                                    <div className="toprule" />
-                                    <div className="abbr">{j.abbr}</div>
-                                </div>
                                 <div className="jbottom">
                                     <div className="jname jname-x">{j.name}</div>
                                     <div className="jfield">{j.field}</div>
@@ -221,15 +215,21 @@ export function SubjectsBand({ disciplines }) {
 }
 
 export function LatestResearch({ latest }) {
+    const { platform } = usePage().props;
+
     return (
-        <section className="psection">
+        <section className="psection psection-latest">
             <div className="container-wide">
                 <div className="head">
-                    <div>
-                        <div className="sub" style={{ marginBottom: 10 }}>
-                            Across all journals · updated daily
-                        </div>
-                        <h2>Latest research</h2>
+                    <div className="sub" style={{ marginBottom: 10 }}>
+                        Across all journals · updated daily
+                    </div>
+                    <div className="head-title-row">
+                        <h2>Latest articles</h2>
+                        <a href={platform.urls.articles} className="plain head-link">
+                            Browse all
+                            <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
+                        </a>
                     </div>
                 </div>
                 <div>
@@ -240,7 +240,7 @@ export function LatestResearch({ latest }) {
                         <article
                             key={r.id}
                             className="latest-row"
-                            style={{ backgroundColor: '#fff', cursor: r.url ? 'pointer' : 'default' }}
+                            style={{ cursor: r.url ? 'pointer' : 'default' }}
                             onClick={() => r.url && (window.location.href = r.url)}
                             onKeyDown={(e) => e.key === 'Enter' && r.url && (window.location.href = r.url)}
                             role={r.url ? 'link' : undefined}
