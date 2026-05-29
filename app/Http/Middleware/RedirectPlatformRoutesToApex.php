@@ -15,6 +15,8 @@ class RedirectPlatformRoutesToApex
     private const PLATFORM_PREFIXES = [
         '/login',
         '/register',
+        '/blogs',
+        '/about',
         '/dashboard',
         '/settings',
         '/admin',

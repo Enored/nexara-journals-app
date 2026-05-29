@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { ArticleList, CiteModal } from './article-list';
 import { IssueArchive, Footer, Sidebar } from './archive-sidebar';
 import { JournalMasthead, OpenAccessStory, SubNav } from './journal-chrome';
-import { JournalSiteHeader } from './journal-site-header';
+import { SiteHeader } from '../shared/site-header';
 import { JournalDataProvider, useJournalData } from './data-context';
 
 export default function App({ journal, articles, issues, subjects }) {
@@ -85,7 +85,7 @@ function AppShell() {
 
   return (
     <div className="app">
-      <JournalSiteHeader view={view} onNav={handleNav} />
+      <SiteHeader view={view} onNav={handleNav} />
 
       {view === 'home' &&
       <>

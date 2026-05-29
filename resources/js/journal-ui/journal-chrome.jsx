@@ -1,76 +1,8 @@
 import React from 'react';
-import { ArrowRight, Bell, Search, User } from 'lucide-react';
-import { usePage } from '@inertiajs/react';
+import { ArrowRight, Search } from 'lucide-react';
 import { useJournalData } from './data-context';
-import { JournalAuthMenu } from './journal-auth-menu';
 
-// Top utility bar + wordmark header + journal masthead + sub-nav.
-
-export const UtilityBar = ({ platformName, onNav }) => {
-  const { platform } = usePage().props;
-  const name = platformName ?? platform?.name ?? 'Nexara';
-
-  const goHome = (e) => {
-    e.preventDefault();
-    onNav(e);
-  };
-
-  return (
-    <div className="util">
-      <div className="container">
-        <div className="left">
-          <a href={platform.urls.home} className="plain" onClick={goHome}>{name} Platform</a>
-          <span className="pipe"></span>
-          <a href="#" className="hide-sm plain">Institutional access</a>
-          <a href="#" className="hide-sm plain">Librarians</a>
-          <a href="#" className="hide-sm plain">Help</a>
-        </div>
-        <div className="right">
-          <a href={platform.urls.home} className="plain" onClick={goHome}>Browse all journals</a>
-          <span className="pipe"></span>
-          <JournalAuthMenu />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-export const WordmarkBar = ({ platformName, onNav, view }) => {
-  const { platform, auth } = usePage().props;
-  const name = platformName ?? platform?.name ?? 'Nexara';
-
-  const goHome = (e) => {
-    e.preventDefault();
-    onNav(e);
-  };
-
-  return (
-    <div className="wordmark-bar" style={{ backgroundColor: 'rgb(255, 255, 255)' }}>
-      <div className="container">
-        <a href="/" className="wordmark plain" onClick={goHome}>
-          {name} <span className="dot"></span>
-          <span className="sub">Research Press</span>
-        </a>
-        <nav className="main-nav">
-          <a href="/" className={view === 'home' ? 'active' : ''} onClick={goHome}>Journal home</a>
-          <a href="#" className="plain">Current issue</a>
-          <a href="#" className="plain">Archive</a>
-          <a href="#" className="plain">Submit</a>
-          <a href="#" className="plain">Editorial board</a>
-          <span className="divider"></span>
-          <a href="#" className="plain" aria-label="Alerts"><Bell size={16} strokeWidth={1.5} aria-hidden /></a>
-          {!auth?.user && (
-            <a href={platform.urls.login} className="plain" aria-label="Sign in">
-              <User size={16} strokeWidth={1.5} aria-hidden />
-            </a>
-          )}
-        </nav>
-      </div>
-    </div>
-  );
-};
-
+// Journal masthead + sub-nav (site header lives in shared/site-chrome).
 
 export const JournalMasthead = ({ onSubmit }) => {
   const { journal: j } = useJournalData();
@@ -177,7 +109,7 @@ export const OpenAccessStory = () =>
             <em>Computational Cognition</em> has been diamond open-access since its founding — readers pay nothing, and authors pay nothing. The journal is funded by a consortium of research universities and a single irrevocable endowment, so editorial independence does not depend on publication volume.
           </p>
           <p style={{ marginTop: 24 }}>
-            <a href="#" style={{ color: 'var(--oa-bg)', borderBottomColor: 'rgba(243,231,207,0.4)' }}>Read our funding statement →</a>
+            <a href="#" style={{ color: 'var(--oa-bg)', borderBottomColor: 'rgba(159,176,212,0.4)' }}>Read our funding statement →</a>
           </p>
         </div>
         <div>

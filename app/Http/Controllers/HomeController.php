@@ -8,6 +8,7 @@ use App\Models\Edition;
 use App\Models\Journal;
 use App\Models\Submission;
 use App\Support\ArticlePayload;
+use App\Support\PlatformHomePayload;
 use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -22,6 +23,7 @@ class HomeController extends Controller
 
         $journals = Journal::query()
             ->where('is_active', true)
+            ->withCount(['submissions as published_articles_count' => fn ($q) => $q->where('status', SubmissionStatus::Published)])
             ->orderBy('name')
             ->get();
 
@@ -29,13 +31,10 @@ class HomeController extends Controller
             ->where('status', SubmissionStatus::Published)
             ->with(['journal', 'author'])
             ->orderByDesc('submitted_at')
-            ->limit(5)
+            ->limit(6)
             ->get();
 
-        return response()->view('home', [
-            'journals' => $journals,
-            'latestArticles' => $latestArticles,
-        ]);
+        return Inertia::render('Platform/Home', PlatformHomePayload::build($journals, $latestArticles));
     }
 
     private function renderJournalHome(Journal $journal): InertiaResponse

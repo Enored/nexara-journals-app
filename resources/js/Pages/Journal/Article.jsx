@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { ArticleDetail } from '../../journal-ui/article-detail';
 import { CiteModal } from '../../journal-ui/article-list';
 import { Footer } from '../../journal-ui/archive-sidebar';
-import { JournalSiteHeader } from '../../journal-ui/journal-site-header';
+import { SiteHeader } from '../../shared/site-header';
 import '../../../css/journal-home.css';
 import '../../journal-ui/styles.css';
 
@@ -36,7 +36,7 @@ export default function JournalArticle({ pageTitle, journal, article }) {
                 <meta name="description" content={article.abstract.slice(0, 160)} />
             </Head>
             <div className="app">
-                <JournalSiteHeader view="article" />
+                <SiteHeader view="article" />
 
                 <ArticleDetail
                     article={article}

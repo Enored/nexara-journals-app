@@ -3,15 +3,15 @@
   --ink: #0b1a36;
   --ink-2: #1a294a;
   --ink-3: #324166;
-  --paper: #f7f4ec;
-  --paper-2: #fbfaf4;
-  --paper-3: #efebe0;
+  --paper: #ffffff;
+  --paper-2: #ffffff;
+  --paper-3: #f6f6f6;
   --rule: rgba(11, 26, 54, 0.12);
   --rule-strong: rgba(11, 26, 54, 0.32);
   --muted: #5a6276;
   --muted-2: #7b8295;
-  --oa: #8a5a1c;          /* warm ochre for OA */
-  --oa-bg: #f3e7cf;
+  --oa: #4a5f85;
+  --oa-bg: #9fb0d4;
   --accent: #8a1c1c;      /* deep cinnabar for highlights */
   --accent-2: #b04444;
   --good: #2f5d3a;
@@ -72,8 +72,8 @@ button { font: inherit; cursor: pointer; }
 
 /* ---------- Layout ---------- */
 .app { max-width: 100%; min-height: 100vh; display: flex; flex-direction: column; }
-.container { max-width: 1320px; margin: 0 auto; padding-inline: var(--pad-x); width: 100%; }
-.container-wide { max-width: 1480px; margin: 0 auto; padding-inline: var(--pad-x); width: 100%; }
+.container { max-width: 1440px; margin: 0 auto; padding-inline: var(--pad-x); width: 100%; }
+.container-wide { max-width: 1440px; margin: 0 auto; padding-inline: var(--pad-x); width: 100%; }
 
 /* ---------- Utility bar ---------- */
 .util {
