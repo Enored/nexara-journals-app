@@ -59,6 +59,7 @@ class HandleInertiaRequests extends Middleware
                     'blogs' => platform_route('blogs.index'),
                     'about' => platform_route('about'),
                     'login' => platform_route('login'),
+                    'register' => platform_route('register'),
                     'dashboard' => platform_route('dashboard'),
                     'settings' => platform_route('settings.edit'),
                     'logout' => platform_route('logout'),
