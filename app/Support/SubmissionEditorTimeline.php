@@ -141,30 +141,12 @@ class SubmissionEditorTimeline
 
         if ($assignment->invited_at) {
             $events[] = [
-                'kind' => 'reviewer_invited',
-                'label' => 'You were invited to review',
+                'kind' => 'reviewer_assigned',
+                'label' => 'You were assigned to review',
                 'at' => Carbon::parse($assignment->invited_at),
                 'meta' => [
                     'deadline' => $assignment->deadline->format('M j, Y'),
                 ],
-            ];
-        }
-
-        if ($assignment->responded_at && $assignment->status === ReviewAssignmentStatus::Accepted) {
-            $events[] = [
-                'kind' => 'reviewer_accepted',
-                'label' => 'You accepted the review invitation',
-                'at' => Carbon::parse($assignment->responded_at),
-                'meta' => [],
-            ];
-        }
-
-        if ($assignment->responded_at && $assignment->status === ReviewAssignmentStatus::Declined) {
-            $events[] = [
-                'kind' => 'reviewer_declined',
-                'label' => 'You declined the review invitation',
-                'at' => Carbon::parse($assignment->responded_at),
-                'meta' => ['reason' => $assignment->decline_reason],
             ];
         }
 
@@ -237,31 +219,13 @@ class SubmissionEditorTimeline
         foreach ($roundAssignments as $assignment) {
             if (! $forAuthor && $assignment->invited_at) {
                 $events[] = [
-                    'kind' => 'reviewer_invited',
-                    'label' => 'Invited '.$assignment->reviewer->name.' to review',
+                    'kind' => 'reviewer_assigned',
+                    'label' => 'Assigned '.$assignment->reviewer->name.' to review',
                     'at' => Carbon::parse($assignment->invited_at),
                     'meta' => [
                         'reviewer' => $assignment->reviewer->name,
                         'deadline' => $assignment->deadline->format('M j, Y'),
                     ],
-                ];
-            }
-
-            if (! $forAuthor && $assignment->responded_at && $assignment->status === ReviewAssignmentStatus::Accepted) {
-                $events[] = [
-                    'kind' => 'reviewer_accepted',
-                    'label' => $assignment->reviewer->name.' accepted the review invitation',
-                    'at' => Carbon::parse($assignment->responded_at),
-                    'meta' => [],
-                ];
-            }
-
-            if (! $forAuthor && $assignment->responded_at && $assignment->status === ReviewAssignmentStatus::Declined) {
-                $events[] = [
-                    'kind' => 'reviewer_declined',
-                    'label' => $assignment->reviewer->name.' declined the review invitation',
-                    'at' => Carbon::parse($assignment->responded_at),
-                    'meta' => ['reason' => $assignment->decline_reason],
                 ];
             }
 

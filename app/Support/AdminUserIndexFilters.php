@@ -13,8 +13,12 @@ final class AdminUserIndexFilters
 {
     public const PER_PAGE = 25;
 
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_SUSPENDED = 'suspended';
+
     /**
-     * @return array{q: string, journal: string|null, role: JournalRole|null}
+     * @return array{q: string, journal: string|null, role: JournalRole|null, status: string|null}
      */
     public static function fromRequest(Request $request): array
     {
@@ -25,18 +29,30 @@ final class AdminUserIndexFilters
             $role = null;
         }
 
+        $status = $request->string('status')->toString();
+        if (! in_array($status, [self::STATUS_ACTIVE, self::STATUS_SUSPENDED], true)) {
+            $status = null;
+        }
+
         return [
             'q' => trim($request->string('q')->toString()),
             'journal' => JournalSlug::fromRequest($request),
             'role' => $role,
+            'status' => $status,
         ];
     }
 
     /**
-     * @param  array{q: string, journal: string|null, role: JournalRole|null}  $filters
+     * @param  array{q: string, journal: string|null, role: JournalRole|null, status: string|null}  $filters
      */
     public static function applyToQuery(Builder $query, array $filters): Builder
     {
+        if ($filters['status'] === self::STATUS_ACTIVE) {
+            $query->where('is_active', true);
+        } elseif ($filters['status'] === self::STATUS_SUSPENDED) {
+            $query->where('is_active', false);
+        }
+
         if ($filters['q'] !== '') {
             $term = '%'.$filters['q'].'%';
             $query->where(function (Builder $query) use ($term) {
@@ -59,6 +75,18 @@ final class AdminUserIndexFilters
         }
 
         return $query;
+    }
+
+    /**
+     * @param  array{q: string, journal: string|null, role: JournalRole|null}  $filters
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    public static function results(array $filters)
+    {
+        $query = User::query()->with(['staffJournalRoles' => fn ($q) => $q->with('journal')]);
+        self::applyToQuery($query, $filters);
+
+        return $query->orderBy('name')->get();
     }
 
     /**
@@ -109,6 +137,14 @@ final class AdminUserIndexFilters
             ];
         }
 
+        if ($filters['status'] !== null) {
+            $pills[] = [
+                'key' => 'status',
+                'label' => 'Status: '.ucfirst($filters['status']),
+                'url' => self::indexUrl(self::without($filters, 'status')),
+            ];
+        }
+
         return $pills;
     }
 
@@ -116,7 +152,8 @@ final class AdminUserIndexFilters
     {
         return $filters['q'] !== ''
             || $filters['journal'] !== null
-            || $filters['role'] !== null;
+            || $filters['role'] !== null
+            || $filters['status'] !== null;
     }
 
     /**
@@ -135,6 +172,9 @@ final class AdminUserIndexFilters
         }
         if ($filters['role'] !== null) {
             $params['role'] = $filters['role']->value;
+        }
+        if ($filters['status'] !== null) {
+            $params['status'] = $filters['status'];
         }
         if ($page !== null && $page > 1) {
             $params['page'] = $page;
@@ -162,7 +202,7 @@ final class AdminUserIndexFilters
             return [];
         }
 
-        $allowed = ['q', JournalSlug::QUERY_KEY, 'journal_id', 'role', 'page'];
+        $allowed = ['q', JournalSlug::QUERY_KEY, 'journal_id', 'role', 'status', 'page'];
         $params = array_intersect_key($return, array_flip($allowed));
 
         if (isset($params['journal_id']) && ! isset($params[JournalSlug::QUERY_KEY])) {
@@ -191,6 +231,9 @@ final class AdminUserIndexFilters
         }
         if ($key === 'role') {
             $next['role'] = null;
+        }
+        if ($key === 'status') {
+            $next['status'] = null;
         }
 
         return $next;

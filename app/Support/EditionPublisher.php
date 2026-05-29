@@ -7,13 +7,12 @@ use App\Enums\SubmissionStatus;
 use App\Models\Edition;
 use App\Models\Submission;
 use App\Models\WorkflowNotification;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 final class EditionPublisher
 {
-    public static function publish(Edition $edition, ?Carbon $publishedAt = null): void
+    public static function publish(Edition $edition): void
     {
         if ($edition->status === EditionStatus::Published) {
             throw ValidationException::withMessages([
@@ -31,10 +30,10 @@ final class EditionPublisher
             ]);
         }
 
-        DB::transaction(function () use ($edition, $publishedAt) {
+        DB::transaction(function () use ($edition) {
             $edition->update([
                 'status' => EditionStatus::Published,
-                'published_at' => $publishedAt ?? $edition->published_at ?? now(),
+                'published_at' => now(),
             ]);
 
             $submissions = Submission::query()
@@ -71,18 +70,15 @@ final class EditionPublisher
                 ->where('status', SubmissionStatus::Published)
                 ->update(['status' => SubmissionStatus::Accepted]);
 
-            $edition->update(['status' => EditionStatus::Draft]);
+            $edition->update([
+                'status' => EditionStatus::Draft,
+                'published_at' => null,
+            ]);
         });
     }
 
     public static function slotSubmission(Edition $edition, Submission $submission): void
     {
-        if ($edition->status !== EditionStatus::Draft) {
-            throw ValidationException::withMessages([
-                'edition_id' => 'Articles can only be added to draft issues. Unpublish the issue first or create a new draft issue.',
-            ]);
-        }
-
         if ($submission->journal_id !== $edition->journal_id) {
             throw ValidationException::withMessages([
                 'submission' => 'This manuscript belongs to a different journal.',
@@ -101,7 +97,26 @@ final class EditionPublisher
             ]);
         }
 
-        $submission->update(['edition_id' => $edition->id]);
+        DB::transaction(function () use ($edition, $submission) {
+            $attributes = ['edition_id' => $edition->id];
+
+            if ($edition->status === EditionStatus::Published) {
+                $attributes['status'] = SubmissionStatus::Published;
+            }
+
+            $submission->update($attributes);
+
+            if ($edition->status === EditionStatus::Published) {
+                WorkflowNotification::query()->create([
+                    'user_id' => $submission->author_id,
+                    'type' => 'submission_published',
+                    'data' => [
+                        'submission_id' => $submission->id,
+                        'edition_id' => $edition->id,
+                    ],
+                ]);
+            }
+        });
     }
 
     public static function removeSubmission(Edition $edition, Submission $submission): void

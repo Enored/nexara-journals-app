@@ -8,53 +8,44 @@ use App\Models\User;
 class DashboardNavigation
 {
     /**
-     * @return array{activeRole: string, roles: list<array{key: string, label: string, route: string}>, items: list<array{key: string, label: string, route: string, icon: string}>}
+     * @return array{
+     *     showRolePicker: bool,
+     *     sectionTitle: string,
+     *     activeRole: string,
+     *     activeRoleMeta: array{key: string, label: string, route: string, icon: string},
+     *     roles: list<array{key: string, label: string, route: string, icon: string}>,
+     *     items: list<array{key: string, label: string, route: string, icon: string}>
+     * }
      */
     public static function forUser(User $user, string $activeNav = ''): array
     {
-        $hasEditor = $user->journalUserRoles()->where('role', JournalRole::Editor)->exists();
-        $hasReviewer = $user->journalUserRoles()->where('role', JournalRole::Reviewer)->exists();
-        $isAdmin = $user->isPlatformAdmin();
-
-        $roles = [
-            ['key' => 'overview', 'label' => 'Overview', 'route' => platform_route('dashboard')],
-            ['key' => 'author', 'label' => 'Author', 'route' => platform_route('author.dashboard')],
-        ];
-
-        if ($hasReviewer) {
-            $roles[] = ['key' => 'reviewer', 'label' => 'Reviewer', 'route' => platform_route('reviewer.dashboard')];
-        }
-
-        if ($hasEditor) {
-            $roles[] = ['key' => 'editor', 'label' => 'Editor', 'route' => platform_route('editor.dashboard')];
-        }
-
-        if ($isAdmin) {
-            $roles[] = ['key' => 'admin', 'label' => 'Admin', 'route' => platform_route('admin.dashboard')];
-        }
-
+        $roles = self::rolesFor($user);
         $activeRole = self::resolveActiveRole($activeNav);
+        $showRolePicker = $activeNav === 'overview';
 
         $menus = [
             'overview' => [
-                ['key' => 'overview', 'label' => 'Home', 'route' => platform_route('dashboard'), 'icon' => 'overview'],
+                ['key' => 'overview', 'label' => 'Home', 'route' => platform_route('dashboard'), 'icon' => 'layout-dashboard'],
             ],
             'author' => [
-                ['key' => 'author-dashboard', 'label' => 'Dashboard', 'route' => platform_route('author.dashboard'), 'icon' => 'overview'],
-                ['key' => 'author-submissions', 'label' => 'My submissions', 'route' => platform_route('author.submissions'), 'icon' => 'author'],
+                ['key' => 'author-dashboard', 'label' => 'Dashboard', 'route' => platform_route('author.dashboard'), 'icon' => 'layout-dashboard'],
+                ['key' => 'author-submissions', 'label' => 'My submissions', 'route' => platform_route('author.submissions'), 'icon' => 'file-text'],
             ],
             'reviewer' => [
-                ['key' => 'reviewer-dashboard', 'label' => 'Dashboard', 'route' => platform_route('reviewer.dashboard'), 'icon' => 'overview'],
-                ['key' => 'reviewer-inbox', 'label' => 'Review inbox', 'route' => platform_route('reviewer.inbox'), 'icon' => 'reviewer'],
+                ['key' => 'reviewer-dashboard', 'label' => 'Dashboard', 'route' => platform_route('reviewer.dashboard'), 'icon' => 'layout-dashboard'],
+                ['key' => 'reviewer-inbox', 'label' => 'Review inbox', 'route' => platform_route('reviewer.inbox'), 'icon' => 'inbox'],
             ],
             'editor' => [
-                ['key' => 'editor-dashboard', 'label' => 'Dashboard', 'route' => platform_route('editor.dashboard'), 'icon' => 'overview'],
-                ['key' => 'editor-pipeline', 'label' => 'Editorial pipeline', 'route' => platform_route('editor.pipeline'), 'icon' => 'editor'],
+                ['key' => 'editor-dashboard', 'label' => 'Dashboard', 'route' => platform_route('editor.dashboard'), 'icon' => 'layout-dashboard'],
+                ['key' => 'editor-submissions', 'label' => 'Submissions', 'route' => platform_route('editor.submissions'), 'icon' => 'file-text'],
+                ['key' => 'editor-editions', 'label' => 'Issues & volumes', 'route' => platform_route('editor.journals.index'), 'icon' => 'library'],
             ],
             'admin' => [
-                ['key' => 'admin-dashboard', 'label' => 'Dashboard', 'route' => platform_route('admin.dashboard'), 'icon' => 'admin'],
-                ['key' => 'admin-journals', 'label' => 'Journals', 'route' => platform_route('admin.journals.index'), 'icon' => 'journals'],
+                ['key' => 'admin-dashboard', 'label' => 'Dashboard', 'route' => platform_route('admin.dashboard'), 'icon' => 'layout-dashboard'],
+                ['key' => 'admin-journals', 'label' => 'Journals', 'route' => platform_route('admin.journals.index'), 'icon' => 'book-open'],
                 ['key' => 'admin-users', 'label' => 'Users & roles', 'route' => platform_route('admin.users.index'), 'icon' => 'users'],
+                ['key' => 'admin-blogs', 'label' => 'Blogs', 'route' => platform_route('admin.blogs.index'), 'icon' => 'notebook-pen'],
+                ['key' => 'admin-settings', 'label' => 'System settings', 'route' => platform_route('admin.settings.edit'), 'icon' => 'settings'],
             ],
         ];
 
@@ -62,11 +53,86 @@ class DashboardNavigation
             $activeRole = 'overview';
         }
 
+        $activeRoleMeta = collect($roles)->firstWhere('key', $activeRole) ?? $roles[0];
+
+        if ($activeNav === 'settings') {
+            $activeRoleMeta = [
+                'key' => 'account',
+                'label' => 'Account',
+                'route' => platform_route('settings.edit'),
+                'icon' => 'settings',
+            ];
+            $items = [
+                ['key' => 'settings', 'label' => 'Account settings', 'route' => platform_route('settings.edit'), 'icon' => 'settings'],
+            ];
+            $sectionTitle = 'Account';
+        } else {
+            $items = $menus[$activeRole];
+            $sectionTitle = $activeRoleMeta['label'];
+        }
+
         return [
+            'showRolePicker' => $showRolePicker,
+            'sectionTitle' => $sectionTitle,
             'activeRole' => $activeRole,
+            'activeRoleMeta' => $activeRoleMeta,
             'roles' => $roles,
-            'items' => $menus[$activeRole],
+            'items' => $items,
         ];
+    }
+
+    /**
+     * @return list<array{key: string, label: string, route: string, icon: string}>
+     */
+    private static function rolesFor(User $user): array
+    {
+        $hasEditor = $user->journalUserRoles()->where('role', JournalRole::Editor)->exists();
+        $hasReviewer = $user->journalUserRoles()->where('role', JournalRole::Reviewer)->exists();
+        $isAdmin = $user->isPlatformAdmin();
+
+        $roles = [
+            [
+                'key' => 'overview',
+                'label' => 'Home',
+                'route' => platform_route('dashboard'),
+                'icon' => 'home',
+            ],
+            [
+                'key' => 'author',
+                'label' => 'Author',
+                'route' => platform_route('author.dashboard'),
+                'icon' => 'pen-line',
+            ],
+        ];
+
+        if ($hasReviewer) {
+            $roles[] = [
+                'key' => 'reviewer',
+                'label' => 'Reviewer',
+                'route' => platform_route('reviewer.dashboard'),
+                'icon' => 'eye',
+            ];
+        }
+
+        if ($hasEditor) {
+            $roles[] = [
+                'key' => 'editor',
+                'label' => 'Editor',
+                'route' => platform_route('editor.dashboard'),
+                'icon' => 'git-branch',
+            ];
+        }
+
+        if ($isAdmin) {
+            $roles[] = [
+                'key' => 'admin',
+                'label' => 'Admin',
+                'route' => platform_route('admin.dashboard'),
+                'icon' => 'shield',
+            ];
+        }
+
+        return $roles;
     }
 
     private static function resolveActiveRole(string $activeNav): string
@@ -83,7 +149,7 @@ class DashboardNavigation
             return 'author';
         }
 
-        if (str_starts_with($activeNav, 'editor')) {
+        if (str_starts_with($activeNav, 'editor') || $activeNav === 'editor-editions') {
             return 'editor';
         }
 

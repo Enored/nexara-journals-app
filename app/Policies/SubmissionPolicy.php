@@ -48,7 +48,10 @@ class SubmissionPolicy
             return false;
         }
 
-        return $submission->status === SubmissionStatus::UnderReview;
+        return in_array($submission->status, [
+            SubmissionStatus::Submitted,
+            SubmissionStatus::UnderReview,
+        ], true);
     }
 
     private function editorCanManageWorkflow(User $user, Submission $submission): bool

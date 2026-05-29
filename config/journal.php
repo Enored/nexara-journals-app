@@ -13,4 +13,13 @@ return [
     | Maximum journals per installation (billing / plan limit).
     */
     'max_journals' => (int) env('JOURNAL_MAX_JOURNALS', 5),
+
+    'article_types' => [
+        'Research Article',
+        'Review Article',
+        'Case Study',
+        'Short Communication',
+        'Letter to the Editor',
+        'Editorial',
+    ],
 ];

@@ -1,19 +1,32 @@
-@props(['label', 'value', 'hint' => null, 'accent' => 'teal'])
+@props(['label', 'value', 'hint' => null, 'accent' => 'primary'])
 
 @php
-    $accentClasses = match ($accent) {
-        'sky' => 'bg-sky-50 text-sky-700 ring-sky-100',
-        'amber' => 'bg-amber-50 text-amber-700 ring-amber-100',
-        'violet' => 'bg-violet-50 text-violet-700 ring-violet-100',
-        'rose' => 'bg-rose-50 text-rose-700 ring-rose-100',
-        default => 'bg-teal-50 text-teal-700 ring-teal-100',
+    $iconBg = match ($accent) {
+        'sky' => 'bg-info-subtle text-info',
+        'amber' => 'bg-warning-subtle text-warning',
+        'violet' => 'bg-purple-subtle text-purple',
+        'rose' => 'bg-danger-subtle text-danger',
+        default => 'bg-primary-subtle text-primary',
     };
 @endphp
 
-<div {{ $attributes->merge(['class' => 'dash-card p-5']) }}>
-    <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">{{ $label }}</p>
-    <p class="mt-2 text-3xl font-bold tabular-nums tracking-tight text-slate-900">{{ $value }}</p>
-    @if ($hint)
-        <p class="mt-1.5 text-sm text-slate-500">{{ $hint }}</p>
-    @endif
+<div class="col">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="avatar fs-60 avatar-img-size flex-shrink-0">
+                    <span class="avatar-title {{ $iconBg }} rounded-circle fs-24">
+                        <i data-lucide="bar-chart-3"></i>
+                    </span>
+                </div>
+                <div class="text-end">
+                    <h3 class="mb-1 fw-normal">{{ $value }}</h3>
+                    <p class="mb-0 text-muted"><span>{{ $label }}</span></p>
+                    @if ($hint)
+                        <p class="mb-0 mt-1 text-muted fs-xs">{{ $hint }}</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

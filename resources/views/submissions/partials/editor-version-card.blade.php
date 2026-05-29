@@ -2,42 +2,42 @@
     $isLatest = $round['version'] === $submission->version;
 @endphp
 
-<section class="dash-card overflow-hidden">
-    <div class="border-b border-slate-100 bg-slate-50/90 px-6 py-4">
-        <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 class="text-lg font-semibold text-slate-900">Version {{ $round['version'] }}</h2>
-            <time class="text-sm text-slate-500" datetime="{{ $round['submitted_at']->toIso8601String() }}">
+<div class="card mb-3">
+    <div class="card-header bg-light">
+        <div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2">
+            <h5 class="mb-0">Version {{ $round['version'] }}</h5>
+            <time class="text-muted fs-sm" datetime="{{ $round['submitted_at']->toIso8601String() }}">
                 Submitted {{ $round['submitted_at']->format('M j, Y g:i A') }}
             </time>
         </div>
         @if ($isLatest)
-            <p class="mt-1 text-xs font-medium text-teal-700">Current round</p>
+            <p class="mb-0 mt-1 fs-xs fw-medium text-success">Current round</p>
         @endif
     </div>
 
-    <div class="px-6 py-5">
-        <section class="pb-4">
-            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Title</h3>
-            <p class="mt-1 text-sm font-medium text-slate-900">{{ $round['title'] }}</p>
-        </section>
-        <section class="border-t border-slate-200 py-4">
-            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Abstract</h3>
-            <p class="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-800">{{ $round['abstract'] }}</p>
-        </section>
-        <section class="border-t border-slate-200 py-4">
-            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Keywords</h3>
-            <p class="mt-1 text-sm text-slate-800">{{ implode(', ', $round['keywords'] ?? []) ?: '—' }}</p>
-        </section>
-        <section class="border-t border-slate-200 pt-4">
-            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Files</h3>
+    <div class="card-body">
+        <div class="mb-3">
+            <h6 class="text-uppercase text-muted fs-xxs fw-semibold">Title</h6>
+            <p class="mb-0 fw-medium">{{ $round['title'] }}</p>
+        </div>
+        <div class="mb-3 pt-2 border-top">
+            <h6 class="text-uppercase text-muted fs-xxs fw-semibold">Abstract</h6>
+            <p class="mb-0 fs-sm" style="white-space: pre-wrap;">{{ $round['abstract'] }}</p>
+        </div>
+        <div class="mb-3 pt-2 border-top">
+            <h6 class="text-uppercase text-muted fs-xxs fw-semibold">Keywords</h6>
+            <p class="mb-0 fs-sm">{{ implode(', ', $round['keywords'] ?? []) ?: '—' }}</p>
+        </div>
+        <div class="pt-2 border-top">
+            <h6 class="text-uppercase text-muted fs-xxs fw-semibold">Files</h6>
             @if ($round['files']->isEmpty())
-                <p class="mt-1 text-sm text-slate-500">No files for this version.</p>
+                <p class="mb-0 text-muted fs-sm">No files for this version.</p>
             @else
-                <ul class="mt-2 divide-y divide-slate-100 text-sm">
+                <ul class="list-unstyled mb-0">
                     @foreach ($round['files'] as $file)
-                        <li class="py-2">
-                            <span class="font-medium text-slate-900">{{ $file->original_name }}</span>
-                            <span class="block text-xs text-slate-500">
+                        <li class="py-1 {{ !$loop->last ? 'border-bottom' : '' }}">
+                            <span class="fw-medium">{{ $file->original_name }}</span>
+                            <span class="d-block text-muted fs-xs">
                                 {{ $file->file_type->value }}
                                 · {{ number_format($file->file_size / 1024, 1) }} KB
                                 · {{ $file->created_at->format('M j, Y g:i A') }}
@@ -46,13 +46,13 @@
                     @endforeach
                 </ul>
             @endif
-        </section>
+        </div>
     </div>
 
     @if (! empty($round['events']))
-        <div class="border-t border-slate-100 px-6 py-5">
-            <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Activity</h3>
-            <ol class="relative mt-4 space-y-0">
+        <div class="card-footer bg-white border-top">
+            <h6 class="text-uppercase text-muted fs-xxs fw-semibold mb-3">Activity</h6>
+            <ol class="list-unstyled mb-0">
                 @foreach ($round['events'] as $event)
                     @include('submissions.partials.workflow-event', [
                         'event' => $event,
@@ -63,4 +63,4 @@
             </ol>
         </div>
     @endif
-</section>
+</div>

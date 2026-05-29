@@ -162,7 +162,7 @@ class SubmissionController extends Controller
             'round_version' => $submission->version,
             'reviewer_id' => $reviewer->id,
             'editor_id' => $user->id,
-            'status' => ReviewAssignmentStatus::Invited,
+            'status' => ReviewAssignmentStatus::Assigned,
             'deadline' => $data['deadline'],
             'invited_at' => now(),
         ]);

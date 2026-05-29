@@ -1,218 +1,185 @@
 @extends('layouts.dashboard', ['activeNav' => 'admin-users'])
 
-@php
-    use App\Support\AdminUserIndexFilters;
-    $listQuery = AdminUserIndexFilters::queryParams($filters);
-@endphp
-
 @section('title', 'Users')
 @section('pageTitle', 'Users')
-@section('pageDescription', 'Search users and assign reviewer, editor, or journal admin roles. Every user can submit as an author without assignment.')
+@section('pageDescription', 'Search users, create accounts, export CSV, and assign staff roles.')
 
 @section('content')
-    <form method="GET" action="{{ platform_route('admin.users.index') }}" class="dash-card w-full p-4">
-        <div class="flex w-full flex-col gap-4 lg:flex-row lg:items-end">
-            <div class="min-w-0 w-full flex-[2]">
-                <label for="users-filter-q" class="dash-field-label">Search</label>
-                <input
-                    type="search"
-                    id="users-filter-q"
-                    name="q"
-                    value="{{ $filters['q'] }}"
-                    placeholder="Name or email…"
-                    class="dash-input"
-                />
-            </div>
-            <div class="min-w-0 w-full flex-1">
-                <label for="users-filter-journal" class="dash-field-label">Journal</label>
-                <select id="users-filter-journal" name="journal" class="dash-select">
-                    <option value="">All journals</option>
-                    @foreach ($journals as $journal)
-                        <option value="{{ $journal->subdomain }}" @selected($filters['journal'] === $journal->subdomain)>{{ $journal->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="min-w-0 w-full flex-1 lg:max-w-xs">
-                <label for="users-filter-role" class="dash-field-label">Role</label>
-                <select id="users-filter-role" name="role" class="dash-select">
-                    <option value="">All roles</option>
-                    @foreach ($roles as $role)
-                        <option value="{{ $role->value }}" @selected($filters['role'] === $role)>{{ $role->label() }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="flex w-full shrink-0 flex-wrap gap-2 lg:w-auto">
-                <x-dash.button type="submit" class="w-full sm:w-auto">Apply</x-dash.button>
-                @if ($hasActiveFilters)
-                    <x-dash.button variant="secondary" :href="platform_route('admin.users.index')" class="w-full sm:w-auto">Reset</x-dash.button>
-                @endif
-            </div>
-        </div>
-    </form>
+    <x-dash.list-partial-zone>
+        @include('admin.users.partials.list')
+    </x-dash.list-partial-zone>
+@endsection
 
-    <x-dash.filter-pills
-        class="mt-4"
-        :pills="$activeFilterPills"
-        :reset-url="$hasActiveFilters ? platform_route('admin.users.index') : null"
+@push('modals')
+    <x-admin.ajax-modal
+        id="user-roles-modal"
+        title="Edit staff roles"
+        size="modal-lg"
+        submit-form="user-roles-form"
+        submit-label="Save roles"
     />
 
-    <x-dash.table class="mt-6">
-        <x-slot:header>
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Journal roles</th>
-                <th class="text-right">Actions</th>
-            </tr>
-        </x-slot:header>
-        <x-slot:body>
-            @forelse ($users as $user)
-                <tr>
-                    <td class="font-medium text-slate-900">
-                        {{ $user->name }}
-                        @if ($user->is_platform_admin)
-                            <x-dash.badge class="ml-1 bg-teal-50 text-teal-800">Platform admin</x-dash.badge>
-                        @endif
-                    </td>
-                    <td class="text-slate-600">{{ $user->email }}</td>
-                    <td>
-                        <div class="flex flex-wrap gap-1">
-                            @forelse ($user->staffJournalRoles as $jur)
-                                <x-dash.badge title="{{ $jur->journal->name }}">
-                                    {{ $jur->journal->subdomain }} · {{ $jur->role->label() }}
-                                </x-dash.badge>
-                            @empty
-                                <span class="text-slate-400" title="No staff roles; user can still submit manuscripts as an author">—</span>
-                            @endforelse
-                        </div>
-                    </td>
-                    <td class="text-right">
-                        <button
-                            type="button"
-                            class="dash-link-btn"
-                            data-user-roles-open
-                            data-url="{{ platform_route('admin.users.edit-roles', $user) }}?modal=1&amp;{{ http_build_query($listQuery) }}"
-                            data-user-name="{{ $user->name }}"
-                            data-user-email="{{ $user->email }}"
-                        >
-                            Edit roles
-                        </button>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="4" class="!p-0">
-                        <x-dash.empty
-                            title="No users found"
-                            :description="$hasActiveFilters ? 'Try adjusting your search or filters.' : 'Users appear here once they register.'"
-                        />
-                    </td>
-                </tr>
-            @endforelse
-        </x-slot:body>
-    </x-dash.table>
-
-    <x-dash.pagination :paginator="$users" item-label="users" />
-
     <div
-        id="user-roles-modal"
-        class="dash-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="user-roles-modal-title"
+        class="modal fade"
+        id="user-create-modal"
+        tabindex="-1"
+        aria-labelledby="user-create-modal-title"
         aria-hidden="true"
     >
-        <button type="button" class="dash-modal-backdrop" data-user-roles-close aria-label="Close dialog"></button>
-        <div class="dash-modal-panel sm:max-w-xl">
-            <div class="dash-modal-header">
-                <div class="min-w-0">
-                    <h2 id="user-roles-modal-title" class="text-base font-semibold text-slate-900">Edit staff roles</h2>
-                    <p id="user-roles-modal-subtitle" class="mt-0.5 truncate text-sm text-slate-500"></p>
-                </div>
-                <button
-                    type="button"
-                    class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                    data-user-roles-close
-                    aria-label="Close"
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form
+                    method="POST"
+                    action="{{ platform_route('admin.users.store') }}"
+                    id="user-create-form"
                 >
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-            <div id="user-roles-modal-body" class="dash-modal-body">
-                <p class="text-sm text-slate-500">Loading…</p>
-            </div>
-            <div class="dash-modal-footer">
-                <x-dash.button variant="secondary" type="button" data-user-roles-close>Cancel</x-dash.button>
-                <x-dash.button type="submit" form="user-roles-form">Save roles</x-dash.button>
+                    @csrf
+                    @foreach (\App\Support\AdminUserIndexFilters::queryParamsFromRequest(request()) as $key => $value)
+                        <input type="hidden" name="return[{{ $key }}]" value="{{ $value }}">
+                    @endforeach
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="user-create-modal-title">Create user</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small mb-3">
+                            A secure random password will be generated automatically. You will see it once after the account is created.
+                        </p>
+                        <x-dash.input
+                            label="First name"
+                            name="first_name"
+                            :value="old('first_name')"
+                            required
+                        />
+                        <x-dash.input
+                            label="Last name"
+                            name="last_name"
+                            :value="old('last_name')"
+                            required
+                        />
+                        <x-dash.input
+                            label="Email"
+                            name="email"
+                            type="email"
+                            :value="old('email')"
+                            required
+                        />
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input type="hidden" name="is_active" value="0">
+                                <input
+                                    type="checkbox"
+                                    name="is_active"
+                                    value="1"
+                                    id="user-create-active"
+                                    class="form-check-input"
+                                    @checked(old('is_active', true))
+                                >
+                                <label class="form-check-label" for="user-create-active">Active (can sign in)</label>
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <div class="form-check">
+                                <input type="hidden" name="is_platform_admin" value="0">
+                                <input
+                                    type="checkbox"
+                                    name="is_platform_admin"
+                                    value="1"
+                                    id="user-create-platform-admin"
+                                    class="form-check-input"
+                                    @checked(old('is_platform_admin'))
+                                >
+                                <label class="form-check-label" for="user-create-platform-admin">Platform administrator</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create user</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-@endsection
+
+    @if (session('created_user_password'))
+        <div
+            class="modal fade"
+            id="user-created-modal"
+            tabindex="-1"
+            aria-labelledby="user-created-modal-title"
+            aria-hidden="true"
+            data-user-created-modal
+        >
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header border-0 pb-0">
+                        <h4 class="modal-title" id="user-created-modal-title">User created</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body pt-2">
+                        <p class="mb-3">
+                            <strong>{{ session('created_user_name') }}</strong> can now sign in.
+                            Share these credentials securely — this password is shown only once.
+                        </p>
+                        <dl class="row mb-0 small">
+                            <dt class="col-sm-3 text-muted">Email</dt>
+                            <dd class="col-sm-9 mb-2 font-monospace">{{ session('created_user_email') }}</dd>
+                            <dt class="col-sm-3 text-muted">Password</dt>
+                            <dd class="col-sm-9 mb-0">
+                                <code id="created-user-password" class="user-select-all">{{ session('created_user_password') }}</code>
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button
+                            type="button"
+                            class="btn btn-light"
+                            data-copy-created-password
+                            data-password="{{ session('created_user_password') }}"
+                        >
+                            Copy password
+                        </button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Done</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+@endpush
 
 @push('scripts')
-<script>
-(function () {
-    const modal = document.getElementById('user-roles-modal');
-    const body = document.getElementById('user-roles-modal-body');
-    const subtitle = document.getElementById('user-roles-modal-subtitle');
-    if (!modal || !body || !subtitle) {
-        return;
-    }
-
-    let lastTrigger = null;
-
-    const open = () => {
-        modal.classList.add('is-open');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('overflow-hidden');
-    };
-
-    const close = () => {
-        modal.classList.remove('is-open');
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('overflow-hidden');
-        body.innerHTML = '<p class="text-sm text-slate-500">Loading…</p>';
-        if (lastTrigger) {
-            lastTrigger.focus();
-            lastTrigger = null;
-        }
-    };
-
-    const load = async (url, name, email) => {
-        subtitle.textContent = name + ' · ' + email;
-        body.innerHTML = '<p class="text-sm text-slate-500">Loading…</p>';
-        open();
-
-        try {
-            const response = await fetch(url, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' },
-                credentials: 'same-origin',
-            });
-            if (!response.ok) {
-                throw new Error('Failed to load');
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const createdModal = document.getElementById('user-created-modal');
+            if (createdModal && window.bootstrap?.Modal) {
+                window.bootstrap.Modal.getOrCreateInstance(createdModal).show();
             }
-            body.innerHTML = await response.text();
-        } catch {
-            body.innerHTML = '<p class="text-sm text-red-600">Could not load roles. Please try again.</p>';
-        }
-    };
 
-    document.querySelectorAll('[data-user-roles-open]').forEach((btn) => {
-        btn.addEventListener('click', () => {
-            lastTrigger = btn;
-            load(btn.dataset.url, btn.dataset.userName, btn.dataset.userEmail);
+            const createModal = document.getElementById('user-create-modal');
+            @if ($errors->hasAny(['first_name', 'last_name', 'email', 'is_platform_admin', 'is_active']))
+            if (createModal && window.bootstrap?.Modal) {
+                window.bootstrap.Modal.getOrCreateInstance(createModal).show();
+            }
+            @endif
+
+            document.querySelector('[data-copy-created-password]')?.addEventListener('click', async (event) => {
+                const password = event.currentTarget.getAttribute('data-password');
+                if (!password) {
+                    return;
+                }
+
+                try {
+                    await navigator.clipboard.writeText(password);
+                    if (typeof window.showDashToast === 'function') {
+                        window.showDashToast('Password copied to clipboard.', 'success');
+                    }
+                } catch {
+                    if (typeof window.showDashToast === 'function') {
+                        window.showDashToast('Could not copy password. Select and copy it manually.', 'error');
+                    }
+                }
+            });
         });
-    });
-
-    modal.querySelectorAll('[data-user-roles-close]').forEach((el) => {
-        el.addEventListener('click', close);
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('is-open')) {
-            close();
-        }
-    });
-})();
-</script>
+    </script>
 @endpush

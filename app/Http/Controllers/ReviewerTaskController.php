@@ -33,8 +33,8 @@ class ReviewerTaskController extends Controller
     {
         $this->authorize('submit', $assignment);
 
-        if ($assignment->status !== ReviewAssignmentStatus::Accepted) {
-            return back()->withErrors(['review' => 'Accept the invitation before submitting a review.']);
+        if ($assignment->status !== ReviewAssignmentStatus::Assigned) {
+            return back()->withErrors(['review' => 'This assignment is not active.']);
         }
 
         if ($assignment->review) {
@@ -82,60 +82,4 @@ class ReviewerTaskController extends Controller
             ->with('status', 'Review submitted. Thank you.');
     }
 
-    public function accept(ReviewAssignment $assignment): RedirectResponse
-    {
-        $this->authorize('respond', $assignment);
-
-        if ($assignment->status !== ReviewAssignmentStatus::Invited) {
-            return back()->withErrors(['invite' => 'This invitation is no longer open.']);
-        }
-
-        $assignment->update([
-            'status' => ReviewAssignmentStatus::Accepted,
-            'responded_at' => now(),
-        ]);
-
-        WorkflowNotification::query()->create([
-            'user_id' => $assignment->editor_id,
-            'type' => 'reviewer_accepted',
-            'data' => [
-                'submission_id' => $assignment->submission_id,
-                'assignment_id' => $assignment->id,
-            ],
-        ]);
-
-        return back()->with('status', 'You accepted this review.');
-    }
-
-    public function decline(Request $request, ReviewAssignment $assignment): RedirectResponse
-    {
-        $this->authorize('respond', $assignment);
-
-        if ($assignment->status !== ReviewAssignmentStatus::Invited) {
-            return back()->withErrors(['invite' => 'This invitation is no longer open.']);
-        }
-
-        $data = $request->validate([
-            'reason' => ['nullable', 'string', 'max:5000'],
-        ]);
-
-        $assignment->update([
-            'status' => ReviewAssignmentStatus::Declined,
-            'responded_at' => now(),
-            'decline_reason' => $data['reason'] ?? null,
-        ]);
-
-        WorkflowNotification::query()->create([
-            'user_id' => $assignment->editor_id,
-            'type' => 'reviewer_declined',
-            'data' => [
-                'submission_id' => $assignment->submission_id,
-                'assignment_id' => $assignment->id,
-            ],
-        ]);
-
-        return redirect()
-            ->away(platform_route('reviewer.inbox'))
-            ->with('status', 'You declined this review.');
-    }
 }

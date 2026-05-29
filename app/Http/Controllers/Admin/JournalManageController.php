@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\ReturnsDashListPartial;
 use App\Http\Controllers\Controller;
 use App\Models\Journal;
 use App\Support\JournalLimit;
@@ -11,16 +12,25 @@ use Illuminate\View\View;
 
 class JournalManageController extends Controller
 {
-    public function index(): View
+    use ReturnsDashListPartial;
+
+    public function index(Request $request): View
     {
         $journals = Journal::query()->orderBy('name')->paginate(20);
 
-        return view('admin.journals.index', [
+        $data = [
             'journals' => $journals,
             'journalCount' => JournalLimit::count(),
             'journalMax' => JournalLimit::max(),
             'canCreateMoreJournals' => JournalLimit::canCreate(),
-        ]);
+        ];
+
+        return $this->dashListResponse(
+            $request,
+            'admin.journals.partials.list',
+            'admin.journals.index',
+            $data,
+        );
     }
 
     public function create(): View|RedirectResponse

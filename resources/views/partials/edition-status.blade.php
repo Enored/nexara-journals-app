@@ -3,7 +3,7 @@
 @endphp
 
 @if ($status === EditionStatus::Published)
-    <x-dash.badge class="bg-emerald-50 text-emerald-800">Published</x-dash.badge>
+    <span class="badge badge-soft-success">Published</span>
 @else
-    <x-dash.badge class="bg-amber-50 text-amber-900">Draft</x-dash.badge>
+    <span class="badge badge-soft-warning">Draft</span>
 @endif

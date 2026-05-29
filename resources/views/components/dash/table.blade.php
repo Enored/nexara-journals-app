@@ -1,11 +1,17 @@
-<div {{ $attributes->merge(['class' => 'dash-table-wrap']) }}>
-    <table class="dash-table">
-        @isset($header)
-            <thead>{{ $header }}</thead>
-        @endisset
-        <tbody>{{ $body ?? $slot }}</tbody>
-    </table>
+@props(['bare' => false])
+
+<div {{ $attributes->class($bare ? [] : ['card']) }}>
+    <div class="table-responsive">
+        <table class="table table-custom table-centered table-hover w-100 mb-0">
+            @isset($header)
+                <thead class="bg-light align-middle bg-opacity-25 thead-sm">
+                    {{ $header }}
+                </thead>
+            @endisset
+            <tbody>{{ $body ?? $slot }}</tbody>
+        </table>
+    </div>
     @isset($footer)
-        <div class="border-t border-slate-100 bg-white px-4 py-3">{{ $footer }}</div>
+        <div class="card-footer border-0">{{ $footer }}</div>
     @endisset
 </div>

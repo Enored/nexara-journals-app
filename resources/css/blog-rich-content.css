@@ -1,0 +1,123 @@
+/* Shared rich-text styles for Quill editor + HTML preview */
+
+.blog-editor-wrap .ql-editor strong,
+.blog-editor-wrap .ql-editor b,
+.blog-rich-content strong,
+.blog-rich-content b {
+    font-weight: 700 !important;
+}
+
+.blog-editor-wrap .ql-editor em,
+.blog-rich-content em {
+    font-style: italic;
+}
+
+.blog-editor-wrap .ql-editor u,
+.blog-rich-content u {
+    text-decoration: underline;
+}
+
+.blog-editor-wrap .ql-editor s,
+.blog-rich-content s {
+    text-decoration: line-through;
+}
+
+.blog-editor-wrap .ql-editor blockquote,
+.blog-rich-content blockquote {
+    border-left: 4px solid var(--bs-border-color, #ccc);
+    margin: 0.5rem 0;
+    padding: 0.25rem 0 0.25rem 1rem;
+    color: var(--bs-secondary-color, #6c757d);
+}
+
+.blog-editor-wrap .ql-editor pre,
+.blog-editor-wrap .ql-editor .ql-code-block-container,
+.blog-rich-content pre,
+.blog-rich-content .ql-code-block-container {
+    background-color: #23241f;
+    color: #f8f8f2;
+    border-radius: 0.375rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-size: 0.875em;
+    margin: 0.5rem 0;
+    overflow-x: auto;
+}
+
+.blog-editor-wrap .ql-editor .ql-code-block-container,
+.blog-rich-content .ql-code-block-container {
+    padding: 0.75rem 1rem;
+}
+
+.blog-editor-wrap .ql-editor .ql-code-block,
+.blog-rich-content .ql-code-block {
+    white-space: pre-wrap;
+}
+
+.blog-editor-wrap .ql-editor code,
+.blog-rich-content code {
+    background-color: rgba(0, 0, 0, 0.06);
+    border-radius: 0.25rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-size: 0.875em;
+    padding: 0.125rem 0.35rem;
+}
+
+.blog-editor-wrap .ql-editor pre code,
+.blog-editor-wrap .ql-editor .ql-code-block-container code,
+.blog-rich-content pre code,
+.blog-rich-content .ql-code-block-container code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+}
+
+.blog-rich-content h1,
+.blog-editor-wrap .ql-editor h1 {
+    font-size: 2em;
+    margin: 0.5rem 0;
+}
+
+.blog-rich-content h2,
+.blog-editor-wrap .ql-editor h2 {
+    font-size: 1.5em;
+    margin: 0.5rem 0;
+}
+
+.blog-rich-content h3,
+.blog-editor-wrap .ql-editor h3 {
+    font-size: 1.17em;
+    margin: 0.5rem 0;
+}
+
+.blog-rich-content p,
+.blog-editor-wrap .ql-editor p {
+    margin: 0 0 0.5rem;
+}
+
+.blog-rich-content p:last-child,
+.blog-editor-wrap .ql-editor p:last-child {
+    margin-bottom: 0;
+}
+
+.blog-rich-content ol,
+.blog-rich-content ul,
+.blog-editor-wrap .ql-editor ol,
+.blog-editor-wrap .ql-editor ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.blog-rich-content a,
+.blog-editor-wrap .ql-editor a {
+    color: var(--bs-primary);
+    text-decoration: underline;
+}
+
+.blog-editor-wrap .ql-container.ql-snow {
+    border: 0;
+}
+
+.blog-editor-wrap .ql-toolbar.ql-snow {
+    border: 0;
+    border-bottom: 1px solid var(--bs-border-color);
+}

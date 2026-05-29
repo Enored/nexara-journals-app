@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Middleware\EnsureJournalContext;
+use App\Http\Middleware\EnsurePlatformOperational;
 use App\Http\Middleware\EnsurePlatformAdmin;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RedirectPlatformRoutesToApex;
 use App\Http\Middleware\ResolveJournalFromHost;
 use Illuminate\Foundation\Application;
@@ -26,6 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             ResolveJournalFromHost::class,
             RedirectPlatformRoutesToApex::class,
+            EnsurePlatformOperational::class,
+            HandleInertiaRequests::class,
         ]);
         $middleware->api(prepend: [
             ResolveJournalFromHost::class,

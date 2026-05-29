@@ -1,20 +1,20 @@
-@extends('layouts.dashboard', ['activeNav' => 'editor-pipeline'])
+@extends('layouts.dashboard', ['activeNav' => 'editor-submissions'])
 
 @section('title', Str::limit($submission->title, 48))
 @section('pageTitle', $submission->title)
 @section('pageDescription', $submission->journal->name . ' · ' . $submission->author->name . ' · ' . str_replace('_', ' ', $submission->status->value))
 
 @section('content')
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <x-dash.link :href="platform_route('editor.pipeline')">← Editorial pipeline</x-dash.link>
-        <div class="flex flex-wrap items-center gap-2">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <x-dash.link :href="platform_route('editor.submissions')">← Submissions</x-dash.link>
+        <div class="d-flex flex-wrap align-items-center gap-2">
             @include('partials.submission-status', ['status' => $submission->status])
-            <span class="text-sm text-slate-500">Round {{ $submission->version }}</span>
+            <span class="text-muted fs-sm">Round {{ $submission->version }}</span>
         </div>
     </div>
 
-    <div class="grid gap-6 lg:grid-cols-3">
-        <div class="space-y-6 lg:col-span-2">
+    <div class="row g-4">
+        <div class="col-lg-8">
             @foreach ($timeline['versions'] as $round)
                 @include('submissions.partials.editor-version-card', [
                     'submission' => $submission,
@@ -23,122 +23,134 @@
             @endforeach
 
             @if ($timeline['published'])
-                <section class="dash-card border-violet-200 bg-violet-50/50 p-6">
-                    <div class="flex flex-wrap items-baseline justify-between gap-2">
-                        <h2 class="text-lg font-semibold text-slate-900">Published</h2>
-                        <time class="text-sm text-slate-500" datetime="{{ $timeline['published']['at']->toIso8601String() }}">
-                            {{ $timeline['published']['at']->format('M j, Y g:i A') }}
-                        </time>
+                <div class="card border-0 shadow-sm mb-3" style="background: #f3f0ff;">
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2">
+                            <h5 class="card-title mb-0">Published</h5>
+                            <time class="text-muted fs-sm" datetime="{{ $timeline['published']['at']->toIso8601String() }}">
+                                {{ $timeline['published']['at']->format('M j, Y g:i A') }}
+                            </time>
+                        </div>
+                        <p class="mt-3 mb-0 fs-sm">
+                            <a href="{{ $timeline['published']['url'] }}" class="fw-medium text-success" target="_blank" rel="noopener">Open public article page</a>
+                            <span class="text-muted">({{ $submission->journal->subdomain }}.{{ config('journal.base_domain') }})</span>
+                        </p>
                     </div>
-                    <p class="mt-3 text-sm text-slate-700">
-                        <a href="{{ $timeline['published']['url'] }}" class="font-medium text-teal-700 hover:underline" target="_blank" rel="noopener">Open public article page</a>
-                        <span class="text-slate-500">({{ $submission->journal->subdomain }}.{{ config('journal.base_domain') }})</span>
-                    </p>
-                </section>
+                </div>
             @endif
 
             @can('assignReviewer', $submission)
-                <section class="dash-card border-dashed border-slate-300 p-6">
-                    <h2 class="text-lg font-semibold text-slate-900">Assign reviewer</h2>
-                    <p class="mt-1 text-sm text-slate-600">
-                        Invitation applies to <strong>version {{ $submission->version }}</strong>. Users must have the reviewer role on this journal.
-                    </p>
-                    <form method="POST" action="{{ platform_route('editor.submissions.assign-reviewer', $submission) }}" class="mt-4 flex flex-wrap items-end gap-3">
-                        @csrf
-                        <div class="min-w-[14rem] flex-1">
-                            <label class="dash-field-label">Reviewer</label>
-                            <select name="reviewer_id" required class="dash-select mt-1 w-full">
-                                <option value="">Select…</option>
-                                @foreach ($reviewerPool as $u)
-                                    <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="dash-field-label">Deadline</label>
-                            <input type="date" name="deadline" required class="dash-input mt-1" min="{{ now()->addDay()->toDateString() }}">
-                        </div>
-                        <x-dash.button type="submit">Send invitation</x-dash.button>
-                    </form>
-                </section>
-            @endcan
-
-            @can('recordDecision', $submission)
-                @if ($submission->status === \App\Enums\SubmissionStatus::UnderReview)
-                    @include('dashboard.editor.partials.editorial-decision-form', [
-                        'submission' => $submission,
-                        'roundReviews' => $roundReviews,
-                    ])
-                @endif
-            @endcan
-        </div>
-
-        <div class="space-y-6">
-            <section class="dash-card p-6 text-sm">
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Author</h2>
-                <p class="mt-2 font-medium text-slate-900">{{ $submission->author->name }}</p>
-                <p class="text-slate-600">{{ $submission->author->email }}</p>
-                <p class="mt-3 text-xs text-slate-500">Article type: {{ $submission->article_type }}</p>
-            </section>
-
-            <section class="dash-card p-6">
-                <h2 class="text-lg font-semibold text-slate-900">Peer review</h2>
-                <p class="mt-1 text-sm text-slate-600">All invitations and assignments for this manuscript.</p>
-                <div class="mt-4 overflow-x-auto">
-                    <table class="dash-table text-sm">
-                        <thead>
-                            <tr>
-                                <th>Round</th>
-                                <th>Reviewer</th>
-                                <th>Deadline</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($submission->reviewAssignments->sortByDesc('invited_at') as $ra)
-                                <tr>
-                                    <td class="text-slate-600">v{{ $ra->round_version ?? 1 }}</td>
-                                    <td>{{ $ra->reviewer->name }}</td>
-                                    <td class="whitespace-nowrap text-slate-600">{{ $ra->deadline->format('M j, Y') }}</td>
-                                    <td>@include('partials.review-assignment-status', ['status' => $ra->status])</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="text-slate-500">No reviewers assigned yet.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            @can('publish', $submission)
-                <section class="dash-card border-emerald-200 bg-emerald-50/50 p-6">
-                    <h2 class="text-lg font-semibold text-slate-900">Add to issue</h2>
-                    <p class="mt-1 text-sm text-slate-600">Slot this accepted manuscript into a <strong>draft</strong> issue. It becomes public when the issue is published from the admin issues screen.</p>
-                    @if ($submission->edition_id && $submission->status === \App\Enums\SubmissionStatus::Accepted)
-                        <p class="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                            Slotted in <strong>{{ $submission->edition?->label() ?? 'issue' }}</strong> (draft until published).
+                <div class="card border-dashed mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Assign reviewer</h5>
+                        <p class="text-muted fs-sm">
+                            Invitation applies to <strong>version {{ $submission->version }}</strong>. Users must have the reviewer role on this journal.
                         </p>
-                    @elseif ($submission->status === \App\Enums\SubmissionStatus::Published && $submission->edition)
-                        <p class="mt-3 text-sm text-emerald-800">Live in <strong>{{ $submission->edition->label() }}</strong>.</p>
-                    @elseif ($editionsForPublish->isEmpty())
-                        <p class="mt-3 text-sm text-amber-900">No draft issues yet. A platform admin can create one under Journals → Issues.</p>
-                    @else
-                        <form method="POST" action="{{ platform_route('editor.submissions.publish', $submission) }}" class="mt-4 space-y-3">
+                        <form method="POST" action="{{ platform_route('editor.submissions.assign-reviewer', $submission) }}" class="row g-2 align-items-end mt-2">
                             @csrf
-                            <div>
-                                <label class="dash-field-label">Draft issue</label>
-                                <select name="edition_id" required class="dash-select mt-1 w-full">
-                                    @foreach ($editionsForPublish as $ed)
-                                        <option value="{{ $ed->id }}" @selected($submission->edition_id === $ed->id)>{{ $ed->label() }}</option>
+                            <div class="col-md-5">
+                                <label class="form-label fs-sm fw-medium">Reviewer</label>
+                                <select name="reviewer_id" required class="form-select form-select-sm">
+                                    <option value="">Select…</option>
+                                    @foreach ($reviewerPool as $u)
+                                        <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->email }})</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <x-dash.button type="submit" class="bg-emerald-700 hover:bg-emerald-800">Add to issue</x-dash.button>
+                            <div class="col-md-4">
+                                <label class="form-label fs-sm fw-medium">Deadline</label>
+                                <input type="date" name="deadline" required class="form-control form-control-sm" min="{{ now()->addDay()->toDateString() }}">
+                            </div>
+                            <div class="col-md-3">
+                                <x-dash.button type="submit">Send invitation</x-dash.button>
+                            </div>
                         </form>
-                    @endif
-                </section>
+                    </div>
+                </div>
+            @endcan
+
+            @can('recordDecision', $submission)
+                @include('dashboard.editor.partials.editorial-decision-form', [
+                    'submission' => $submission,
+                    'roundReviews' => $roundReviews,
+                ])
+            @endcan
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted fw-semibold fs-xxs mb-2">Author</h6>
+                    <p class="fw-medium mb-1">{{ $submission->author->name }}</p>
+                    <p class="text-muted fs-sm mb-2">{{ $submission->author->email }}</p>
+                    <p class="text-muted fs-xs mb-0">Article type: {{ $submission->article_type }}</p>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Peer review</h5>
+                    <p class="text-muted fs-sm">All invitations and assignments for this manuscript.</p>
+                    <div class="table-responsive mt-2">
+                        <table class="table table-sm table-bordered fs-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Round</th>
+                                    <th>Reviewer</th>
+                                    <th>Deadline</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($submission->reviewAssignments->sortByDesc('invited_at') as $ra)
+                                    <tr>
+                                        <td class="text-muted">v{{ $ra->round_version ?? 1 }}</td>
+                                        <td>{{ $ra->reviewer->name }}</td>
+                                        <td class="text-nowrap text-muted">{{ $ra->deadline->format('M j, Y') }}</td>
+                                        <td>@include('partials.review-assignment-status', ['status' => $ra->status])</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-muted">No reviewers assigned yet.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            @can('publish', $submission)
+                <div class="card mb-3 border-success" style="background: #f0fdf4;">
+                    <div class="card-body">
+                        <h5 class="card-title">Add to issue</h5>
+                        <p class="text-muted fs-sm">Assign this accepted manuscript to an issue. If the issue is already published, the article goes live immediately.</p>
+                        @if ($submission->edition_id && $submission->status === \App\Enums\SubmissionStatus::Accepted)
+                            <p class="mt-2 mb-0 px-3 py-2 rounded border bg-white fs-sm">
+                                Slotted in <strong>{{ $submission->edition?->label() ?? 'issue' }}</strong> (draft until published).
+                            </p>
+                        @elseif ($submission->status === \App\Enums\SubmissionStatus::Published && $submission->edition)
+                            <p class="mt-2 mb-0 text-success fs-sm">Live in <strong>{{ $submission->edition->label() }}</strong>.</p>
+                        @elseif ($editionsForPublish->isEmpty())
+                            <p class="mt-2 mb-0 text-warning fs-sm">No issues yet. Create one under Issues &amp; volumes.</p>
+                        @else
+                            <form method="POST" action="{{ platform_route('editor.submissions.publish', $submission) }}" class="mt-3">
+                                @csrf
+                                <div class="mb-2">
+                                    <label class="form-label fs-sm fw-medium">Issue</label>
+                                    <select name="edition_id" required class="form-select form-select-sm">
+                                        @foreach ($editionsForPublish as $ed)
+                                            <option value="{{ $ed->id }}" @selected($submission->edition_id === $ed->id)>
+                                                {{ $ed->label() }} ({{ $ed->isPublished() ? 'published' : 'draft' }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <x-dash.button type="submit" class="btn-success">Add to issue</x-dash.button>
+                            </form>
+                        @endif
+                    </div>
+                </div>
             @endcan
         </div>
     </div>

@@ -15,6 +15,9 @@ class RedirectPlatformRoutesToApex
     private const PLATFORM_PREFIXES = [
         '/login',
         '/register',
+        '/blogs',
+        '/journals',
+        '/about',
         '/dashboard',
         '/settings',
         '/admin',
@@ -37,6 +40,10 @@ class RedirectPlatformRoutesToApex
         }
 
         if ($request->isMethod('POST') && $path === '/logout') {
+            return $this->redirectToApex($request);
+        }
+
+        if ($path === '/articles') {
             return $this->redirectToApex($request);
         }
 

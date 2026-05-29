@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Enums\JournalRole;
 use App\Enums\SubmissionStatus;
+use App\Http\Controllers\Concerns\ReturnsDashListPartial;
 use App\Http\Controllers\Controller;
 use App\Models\Submission;
 use App\Support\EditorPipelineIndexFilters;
@@ -12,6 +13,8 @@ use Illuminate\View\View;
 
 class EditorPipelineController extends Controller
 {
+    use ReturnsDashListPartial;
+
     public function __invoke(Request $request): View
     {
         $user = auth()->user();
@@ -35,7 +38,7 @@ class EditorPipelineController extends Controller
         $statsBase = Submission::query()->whereIn('journal_id', $journalIds);
         $stats = [
             'total' => (clone $statsBase)->count(),
-            'pipeline' => (clone $statsBase)->whereIn('status', [
+            'in_progress' => (clone $statsBase)->whereIn('status', [
                 SubmissionStatus::Submitted,
                 SubmissionStatus::UnderReview,
                 SubmissionStatus::RevisionRequested,
@@ -46,7 +49,7 @@ class EditorPipelineController extends Controller
 
         $submissions = EditorPipelineIndexFilters::paginate($filters, $journalIds);
 
-        return view('dashboard.editor.pipeline', [
+        $data = [
             'user' => $user,
             'submissions' => $submissions,
             'editorJournals' => $editorJournals,
@@ -55,6 +58,13 @@ class EditorPipelineController extends Controller
             'activeFilterPills' => EditorPipelineIndexFilters::activeFilterPills($filters, $editorJournals),
             'hasActiveFilters' => EditorPipelineIndexFilters::hasActiveFilters($filters),
             'stats' => $stats,
-        ]);
+        ];
+
+        return $this->dashListResponse(
+            $request,
+            'dashboard.editor.partials.pipeline-list',
+            'dashboard.editor.submissions',
+            $data,
+        );
     }
 }

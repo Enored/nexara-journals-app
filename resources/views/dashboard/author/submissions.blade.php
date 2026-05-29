@@ -2,113 +2,109 @@
 
 @section('title', 'My submissions')
 @section('pageTitle', 'My submissions')
-@section('pageDescription', 'Track manuscripts and respond to revision requests.')
+@section('pageDescription', 'Submit new manuscripts and track their progress.')
 
 @section('content')
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="row row-cols-xxl-4 row-cols-md-2 row-cols-1 g-3">
         @include('partials.dashboard.stat-card', ['label' => 'Total', 'value' => $stats['total']])
         @include('partials.dashboard.stat-card', ['label' => 'Active', 'value' => $stats['active'], 'hint' => 'In editorial workflow', 'accent' => 'sky'])
         @include('partials.dashboard.stat-card', ['label' => 'Revision due', 'value' => $stats['revision'], 'accent' => 'amber'])
         @include('partials.dashboard.stat-card', ['label' => 'Published', 'value' => $stats['published'], 'accent' => 'violet'])
     </div>
 
-    <div class="mt-6 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
-        <strong class="font-medium text-slate-900">New submission:</strong>
-        visit a journal site at
-        <code class="rounded bg-slate-100 px-1.5 py-0.5 text-xs">https://{subdomain}.{{ config('journal.base_domain') }}</code>
-        and use <em>Submit manuscript</em> while signed in.
-    </div>
+    <x-dash.list-partial-zone>
+        @include('dashboard.author.partials.submissions-list')
+    </x-dash.list-partial-zone>
+@endsection
 
-    <form method="GET" action="{{ platform_route('author.submissions') }}" class="dash-card mt-6 w-full p-4">
-        <div class="flex w-full flex-col gap-4 lg:flex-row lg:items-end">
-            <div class="min-w-0 w-full flex-[2]">
-                <label for="author-filter-q" class="dash-field-label">Title</label>
-                <input
-                    type="search"
-                    id="author-filter-q"
-                    name="q"
-                    value="{{ $filters['q'] }}"
-                    placeholder="Title…"
-                    class="dash-input"
-                />
-            </div>
-            <div class="min-w-0 w-full flex-1">
-                <label for="author-filter-journal" class="dash-field-label">Journal</label>
-                <select id="author-filter-journal" name="journal" class="dash-select">
-                    <option value="">All my journals</option>
-                    @foreach ($authorJournals as $journal)
-                        <option value="{{ $journal->subdomain }}" @selected($filters['journal'] === $journal->subdomain)>{{ $journal->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="min-w-0 w-full flex-1 lg:max-w-xs">
-                <label for="author-filter-status" class="dash-field-label">Status</label>
-                <select id="author-filter-status" name="status" class="dash-select">
-                    <option value="">All statuses</option>
-                    @foreach ($statuses as $status)
-                        <option value="{{ $status->value }}" @selected($filters['status'] === $status)>{{ str_replace('_', ' ', $status->value) }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="flex w-full shrink-0 flex-wrap gap-2 lg:w-auto">
-                <x-dash.button type="submit" class="w-full sm:w-auto">Apply</x-dash.button>
-                @if ($hasActiveFilters)
-                    <x-dash.button variant="secondary" :href="platform_route('author.submissions')" class="w-full sm:w-auto">Reset</x-dash.button>
-                @endif
+@push('modals')
+    @if ($submitJournals->isNotEmpty())
+        <div
+            class="modal fade"
+            id="manuscript-create-modal"
+            tabindex="-1"
+            aria-labelledby="manuscript-create-modal-title"
+            aria-hidden="true"
+        >
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <form
+                        method="POST"
+                        action="{{ platform_route('author.submissions.store') }}"
+                        id="manuscript-create-form"
+                        enctype="multipart/form-data"
+                    >
+                        @csrf
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="manuscript-create-modal-title">Create manuscript</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <x-dash.select label="Journal" name="journal_id" required>
+                                <option value="" disabled @selected(! old('journal_id') && ! request('journal'))>Select a journal…</option>
+                                @foreach ($submitJournals as $journal)
+                                    <option value="{{ $journal->id }}" @selected(old('journal_id') === $journal->id || (! old('journal_id') && request('journal') === $journal->id))>
+                                        {{ $journal->name }}
+                                    </option>
+                                @endforeach
+                            </x-dash.select>
+                            <x-dash.input
+                                label="Title"
+                                name="title"
+                                :value="old('title')"
+                                required
+                            />
+                            <x-dash.textarea label="Abstract" name="abstract" rows="5" required>{{ old('abstract') }}</x-dash.textarea>
+                            <x-dash.input
+                                label="Keywords"
+                                name="keywords"
+                                :value="old('keywords')"
+                                required
+                            />
+                            <p class="form-text text-muted mt-n3 mb-3">Separate keywords with commas.</p>
+                            <x-dash.select label="Article type" name="article_type" required>
+                                <option value="" disabled @selected(! old('article_type'))>Select type…</option>
+                                @foreach ($articleTypes as $type)
+                                    <option value="{{ $type }}" @selected(old('article_type') === $type)>{{ $type }}</option>
+                                @endforeach
+                            </x-dash.select>
+                            <div class="mb-0">
+                                <label for="manuscript-file" class="form-label">Manuscript file</label>
+                                <input
+                                    type="file"
+                                    name="manuscript"
+                                    id="manuscript-file"
+                                    class="form-control @error('manuscript') is-invalid @enderror"
+                                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                    required
+                                >
+                                @error('manuscript')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                                <p class="form-text text-muted mb-0">PDF or Word (.doc, .docx), max 20 MB. Stored securely on the server for now.</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Submit manuscript</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-    </form>
+    @endif
+@endpush
 
-    <x-dash.filter-pills
-        class="mt-4"
-        :pills="$activeFilterPills"
-        :reset-url="$hasActiveFilters ? platform_route('author.submissions') : null"
-    />
-
-    <x-dash.table class="mt-6">
-        <x-slot:header>
-            <tr>
-                <th>Submitted</th>
-                <th>Title</th>
-                <th>Journal</th>
-                <th>Ver.</th>
-                <th>Status</th>
-                <th class="text-right"></th>
-            </tr>
-        </x-slot:header>
-        <x-slot:body>
-            @forelse ($submissions as $s)
-                <tr>
-                    <td class="whitespace-nowrap text-slate-600">{{ $s->submitted_at?->format('M j, Y') ?? '—' }}</td>
-                    <td class="max-w-xs font-medium text-slate-900">
-                        <a href="{{ platform_route('author.submissions.show', $s) }}" class="hover:text-teal-700 hover:underline">{{ Str::limit($s->title, 56) }}</a>
-                    </td>
-                    <td class="text-slate-600">{{ $s->journal->name }}</td>
-                    <td class="text-slate-600">{{ $s->version }}</td>
-                    <td>@include('partials.submission-status', ['status' => $s->status])</td>
-                    <td class="text-right">
-                        <a href="{{ platform_route('author.submissions.show', $s) }}" class="text-sm font-medium text-teal-700 hover:underline">View</a>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" class="!p-0">
-                        @if ($stats['total'] === 0)
-                            <x-dash.empty
-                                title="No manuscripts yet"
-                                description="When you submit to a journal, your work will appear here with live status updates."
-                            />
-                        @else
-                            <x-dash.empty
-                                title="No submissions match"
-                                :description="$hasActiveFilters ? 'Try adjusting your search or filters.' : 'Nothing on this page.'"
-                            />
-                        @endif
-                    </td>
-                </tr>
-            @endforelse
-        </x-slot:body>
-    </x-dash.table>
-
-    <x-dash.pagination :paginator="$submissions" item-label="submissions" />
-@endsection
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const shouldOpen = {{ ($errors->hasAny(['journal_id', 'title', 'abstract', 'keywords', 'article_type', 'manuscript']) || request('create')) ? 'true' : 'false' }};
+            if (shouldOpen) {
+                const modalEl = document.getElementById('manuscript-create-modal');
+                if (modalEl && window.bootstrap?.Modal) {
+                    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                }
+            }
+        });
+    </script>
+@endpush

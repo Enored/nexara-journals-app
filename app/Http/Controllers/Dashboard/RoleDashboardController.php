@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Enums\JournalRole;
+use App\Enums\SubmissionStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Submission;
 use Illuminate\View\View;
 
 class RoleDashboardController extends Controller
@@ -20,17 +22,34 @@ class RoleDashboardController extends Controller
 
     public function editor(): View
     {
+        $user = auth()->user();
+
         abort_unless(
-            auth()->user()->journalUserRoles()->where('role', JournalRole::Editor)->exists(),
+            $user->journalUserRoles()->where('role', JournalRole::Editor)->exists(),
             403
         );
 
-        return $this->render(
-            activeNav: 'editor-dashboard',
-            title: 'Editor dashboard',
-            pageTitle: 'Editor dashboard',
-            pageDescription: 'Overview and shortcuts for editorial work.',
-        );
+        $journalIds = $user->journalUserRoles()
+            ->where('role', JournalRole::Editor)
+            ->pluck('journal_id');
+
+        $statsBase = Submission::query()->whereIn('journal_id', $journalIds);
+
+        return view('dashboard.editor.dashboard', [
+            'activeNav' => 'editor-dashboard',
+            'title' => 'Editor dashboard',
+            'pageTitle' => 'Editor dashboard',
+            'pageDescription' => 'Overview and shortcuts for editorial work.',
+            'stats' => [
+                'in_progress' => (clone $statsBase)->whereIn('status', [
+                    SubmissionStatus::Submitted,
+                    SubmissionStatus::UnderReview,
+                    SubmissionStatus::RevisionRequested,
+                ])->count(),
+                'accepted' => (clone $statsBase)->where('status', SubmissionStatus::Accepted)->count(),
+                'journals' => $journalIds->count(),
+            ],
+        ]);
     }
 
     public function reviewer(): View

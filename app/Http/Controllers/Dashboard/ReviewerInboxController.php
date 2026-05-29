@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Enums\JournalRole;
 use App\Enums\ReviewAssignmentStatus;
+use App\Http\Controllers\Concerns\ReturnsDashListPartial;
 use App\Http\Controllers\Controller;
 use App\Models\ReviewAssignment;
 use App\Support\ReviewerInboxIndexFilters;
@@ -12,6 +13,8 @@ use Illuminate\View\View;
 
 class ReviewerInboxController extends Controller
 {
+    use ReturnsDashListPartial;
+
     public function __invoke(Request $request): View
     {
         $user = auth()->user();
@@ -35,17 +38,16 @@ class ReviewerInboxController extends Controller
 
         $statsBase = ReviewAssignment::query()->where('reviewer_id', $user->id);
         $stats = [
-            'invited' => (clone $statsBase)->where('status', ReviewAssignmentStatus::Invited)->count(),
-            'active' => (clone $statsBase)->where('status', ReviewAssignmentStatus::Accepted)->count(),
+            'active' => (clone $statsBase)->where('status', ReviewAssignmentStatus::Assigned)->count(),
             'completed' => (clone $statsBase)->where('status', ReviewAssignmentStatus::Completed)->count(),
             'overdue' => (clone $statsBase)
-                ->whereIn('status', [ReviewAssignmentStatus::Invited, ReviewAssignmentStatus::Accepted])
+                ->where('status', ReviewAssignmentStatus::Assigned)
                 ->where('deadline', '<', now()->toDateString())
                 ->count(),
             'total' => (clone $statsBase)->count(),
         ];
 
-        return view('dashboard.reviewer.inbox', [
+        $data = [
             'user' => $user,
             'assignments' => $assignments,
             'reviewerJournals' => $reviewerJournals,
@@ -54,6 +56,13 @@ class ReviewerInboxController extends Controller
             'activeFilterPills' => ReviewerInboxIndexFilters::activeFilterPills($filters, $reviewerJournals),
             'hasActiveFilters' => ReviewerInboxIndexFilters::hasActiveFilters($filters),
             'stats' => $stats,
-        ]);
+        ];
+
+        return $this->dashListResponse(
+            $request,
+            'dashboard.reviewer.partials.inbox-list',
+            'dashboard.reviewer.inbox',
+            $data,
+        );
     }
 }
