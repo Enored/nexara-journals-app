@@ -17,9 +17,12 @@ export default function BlogApp({ posts, pagination, filters, categories, counts
 
     const didMount = useRef(false);
 
-    // Sync local state whenever the server sends a fresh full page (e.g. back/forward).
+    // Sync from server on page 1 only (initial visit, filter, back/forward).
+    // Load-more keeps page > 1 props as just the new slice; appending is handled in fetchPage.
     useEffect(() => {
-        setItems(posts);
+        if (pagination.page === 1) {
+            setItems(posts);
+        }
         setPage(pagination.page);
         setHasMore(pagination.hasMore);
         setTotal(pagination.total);
@@ -27,14 +30,23 @@ export default function BlogApp({ posts, pagination, filters, categories, counts
 
     const fetchPage = (nextFilters, { append }) => {
         setLoading(true);
+        const data = {
+            q: nextFilters.q,
+            category: nextFilters.category,
+        };
+        if (nextFilters.page > 1) {
+            data.page = nextFilters.page;
+        }
+
         router.get(
             blogsUrl,
-            { q: nextFilters.q, category: nextFilters.category, page: nextFilters.page },
+            data,
             {
                 only: ['posts', 'pagination'],
                 preserveState: true,
                 preserveScroll: true,
-                replace: true,
+                replace: !append,
+                preserveUrl: append,
                 onSuccess: (pageObj) => {
                     const freshPosts = pageObj.props.posts;
                     const freshPagination = pageObj.props.pagination;

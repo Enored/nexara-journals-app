@@ -176,9 +176,9 @@ export function BlogIndex({
         (c) => c === 'All' || (counts[c] ?? 0) > 0 || c === active,
     );
 
-    // The first post is featured as the lead while browsing (not while searching).
+    // Lead hero while browsing; on All posts the latest stays in the grid too.
     const lead = !searching ? items[0] : null;
-    const rest = lead ? items.slice(1) : items;
+    const rest = lead && active !== 'All' ? items.slice(1) : items;
 
     let barTitle;
     if (searching) {
