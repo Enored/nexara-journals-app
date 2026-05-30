@@ -28,6 +28,7 @@ use App\Http\Controllers\PublicJournalsController;
 use App\Http\Controllers\JournalSubmissionWebController;
 use App\Http\Controllers\PublicArticleController;
 use App\Http\Controllers\ReviewerTaskController;
+use App\Http\Controllers\SubmissionFileDownloadController;
 use App\Http\Controllers\SubmissionLegacyRedirectController;
 use App\Http\Controllers\SubmissionPublishController;
 use App\Http\Controllers\UserSettingsController;
@@ -103,6 +104,9 @@ Route::middleware('auth')->group(function () {
     });
     Route::get('/editor/submissions/{submission}', [EditorSubmissionShowController::class, 'show'])->name('editor.submissions.show');
     Route::post('/editor/submissions/{submission}/assign-reviewer', [EditorSubmissionActionController::class, 'assignReviewer'])->name('editor.submissions.assign-reviewer');
+    Route::post('/editor/submissions/{submission}/send-for-review', [EditorSubmissionActionController::class, 'sendForReview'])->name('editor.submissions.send-for-review');
+    Route::post('/editor/submissions/{submission}/return-to-author', [EditorSubmissionActionController::class, 'returnToAuthor'])->name('editor.submissions.return-to-author');
+    Route::post('/editor/submissions/{submission}/desk-reject', [EditorSubmissionActionController::class, 'deskReject'])->name('editor.submissions.desk-reject');
     Route::post('/editor/submissions/{submission}/decision', [EditorDecisionController::class, 'store'])->name('editor.submissions.decision');
     Route::post('/editor/submissions/{submission}/publish', [SubmissionPublishController::class, 'store'])->name('editor.submissions.publish');
 
@@ -118,6 +122,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/review-tasks/{assignment}', [ReviewerTaskController::class, 'show'])->name('review-tasks.show');
     Route::post('/review-tasks/{assignment}', [ReviewerTaskController::class, 'store'])->name('review-tasks.store');
+
+    Route::get('/submission-files/{file}', [SubmissionFileDownloadController::class, 'show'])->name('submission-files.download');
 
     Route::middleware('platform.admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [RoleDashboardController::class, 'admin'])->name('dashboard');

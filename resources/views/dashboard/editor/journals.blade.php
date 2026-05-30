@@ -11,8 +11,8 @@
                 <div class="card h-100">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title mb-1">{{ $journal->name }}</h5>
-                        @if ($journal->issn)
-                            <p class="text-muted small mb-3">ISSN {{ $journal->issn }}</p>
+                        @if ($journal->p_issn)
+                            <p class="text-muted small mb-3">ISSN {{ $journal->p_issn }}</p>
                         @else
                             <p class="text-muted small mb-3">Subdomain: {{ $journal->subdomain }}</p>
                         @endif

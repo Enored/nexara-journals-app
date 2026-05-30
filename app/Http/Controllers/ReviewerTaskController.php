@@ -7,6 +7,7 @@ use App\Enums\ReviewRecommendation;
 use App\Models\Review;
 use App\Models\ReviewAssignment;
 use App\Models\WorkflowNotification;
+use App\Support\SubmissionAuthorAnonymizer;
 use App\Support\SubmissionEditorTimeline;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,8 @@ class ReviewerTaskController extends Controller
         $assignment->load(['submission.journal', 'submission.files', 'review']);
 
         $submission = $assignment->submission;
+
+        SubmissionAuthorAnonymizer::forViewer(auth()->user(), $submission);
 
         return view('dashboard.reviewer.review-task-show', [
             'assignment' => $assignment,

@@ -8,11 +8,12 @@ export default defineConfig({
         port: 5173,
         strictPort: true,
         cors: {
+            // Allow the apex AND any journal subdomain (e.g. test.lvh.me) on any
+            // port to load dev assets. Without this, visiting a journal subdomain
+            // blocks the Vite client/scripts via CORS and the page renders blank.
             origin: [
-                'http://demo.lvh.me:8000',
-                'http://lvh.me:8000',
-                'http://localhost:8000',
-                'http://127.0.0.1:8000',
+                /^http:\/\/([a-z0-9-]+\.)*lvh\.me(:\d+)?$/,
+                /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
             ],
         },
         hmr: {

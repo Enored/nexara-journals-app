@@ -6,6 +6,7 @@ use App\Enums\ReviewAssignmentStatus;
 use App\Enums\SubmissionStatus;
 use App\Models\ReviewAssignment;
 use App\Models\Submission;
+use App\Models\SubmissionEditorialDecision;
 use App\Models\User;
 use App\Models\WorkflowNotification;
 use Illuminate\Http\RedirectResponse;
@@ -58,5 +59,73 @@ class EditorSubmissionActionController extends Controller
         ]);
 
         return back()->with('status', 'Reviewer assigned successfully.');
+    }
+
+    public function sendForReview(Request $request, Submission $submission): RedirectResponse
+    {
+        $this->authorize('sendForReview', $submission);
+
+        $submission->update(['status' => SubmissionStatus::Submitted]);
+
+        return back()->with('status', 'Manuscript cleared screening and is ready for reviewer assignment.');
+    }
+
+    public function returnToAuthor(Request $request, Submission $submission): RedirectResponse
+    {
+        $this->authorize('screenReturn', $submission);
+
+        $data = $request->validate([
+            'note' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $submission->update([
+            'status' => SubmissionStatus::RevisionRequested,
+            'decision_letter' => $data['note'],
+        ]);
+
+        WorkflowNotification::query()->create([
+            'user_id' => $submission->author_id,
+            'type' => 'screening_returned',
+            'data' => [
+                'submission_id' => $submission->id,
+                'message' => 'Your submission was returned before peer review. Please address the editor\'s note and resubmit.',
+            ],
+        ]);
+
+        return back()->with('status', 'Submission returned to the author for changes before peer review.');
+    }
+
+    public function deskReject(Request $request, Submission $submission): RedirectResponse
+    {
+        $this->authorize('deskReject', $submission);
+
+        $data = $request->validate([
+            'note' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $submission->update([
+            'status' => SubmissionStatus::Rejected,
+            'decision_letter' => $data['note'],
+        ]);
+
+        SubmissionEditorialDecision::query()->create([
+            'submission_id' => $submission->id,
+            'version' => $submission->version,
+            'decision' => 'reject',
+            'decision_letter' => $data['note'],
+            'assessment_flags' => [],
+            'recorded_by' => $request->user()->id,
+        ]);
+
+        WorkflowNotification::query()->create([
+            'user_id' => $submission->author_id,
+            'type' => 'decision_made',
+            'data' => [
+                'submission_id' => $submission->id,
+                'status' => SubmissionStatus::Rejected->value,
+            ],
+        ]);
+
+        return back()->with('status', 'Submission desk-rejected without peer review and the author has been notified.');
     }
 }

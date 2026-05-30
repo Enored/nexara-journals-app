@@ -42,6 +42,27 @@ class SubmissionPolicy
         ], true);
     }
 
+    public function screen(User $user, Submission $submission): bool
+    {
+        return $this->editorCanManageWorkflow($user, $submission)
+            && $submission->status === SubmissionStatus::Screening;
+    }
+
+    public function screenReturn(User $user, Submission $submission): bool
+    {
+        return $this->screen($user, $submission);
+    }
+
+    public function sendForReview(User $user, Submission $submission): bool
+    {
+        return $this->screen($user, $submission);
+    }
+
+    public function deskReject(User $user, Submission $submission): bool
+    {
+        return $this->screen($user, $submission);
+    }
+
     public function recordDecision(User $user, Submission $submission): bool
     {
         if (! $this->editorCanManageWorkflow($user, $submission)) {

@@ -41,6 +41,7 @@ class AuthorSubmissionController extends Controller
         $stats = [
             'total' => (clone $base)->count(),
             'active' => (clone $base)->whereIn('status', [
+                SubmissionStatus::Screening,
                 SubmissionStatus::Submitted,
                 SubmissionStatus::UnderReview,
                 SubmissionStatus::RevisionRequested,
@@ -85,6 +86,7 @@ class AuthorSubmissionController extends Controller
             'keywords' => ['required', 'string', 'max:2000'],
             'article_type' => ['required', 'string', Rule::in($articleTypes)],
             'manuscript' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:20480'],
+            'blinded_manuscript' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:20480'],
         ]);
 
         $submission = AuthorManuscriptSubmitter::submit($data, $request->user());

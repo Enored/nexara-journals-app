@@ -14,6 +14,7 @@ use App\Support\SubmissionWorkspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AuthorRevisionController extends Controller
 {
@@ -23,16 +24,24 @@ class AuthorRevisionController extends Controller
 
         $data = $request->validate([
             'manuscript' => ['required', 'file', 'max:20480'],
+            'blinded_manuscript' => ['nullable', 'file', 'max:20480'],
             'title' => ['nullable', 'string', 'max:500'],
             'abstract' => ['nullable', 'string', 'max:5000'],
             'keywords' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $file = $request->file('manuscript');
+        $blinded = $request->file('blinded_manuscript');
         $newVersion = $submission->version + 1;
 
-        DB::transaction(function () use ($submission, $data, $file, $newVersion, $request) {
-            $path = $file->store('submissions/'.$submission->id, 'local');
+        if ($submission->journal->review_model->hidesAuthorFromReviewer() && ! $blinded) {
+            throw ValidationException::withMessages([
+                'blinded_manuscript' => 'This journal uses double-blind review. Upload an anonymized copy of your revised manuscript.',
+            ]);
+        }
+
+        DB::transaction(function () use ($submission, $data, $file, $blinded, $newVersion, $request) {
+            $path = $file->store('submissions/'.$submission->id, SubmissionFile::DISK);
 
             SubmissionFile::query()->create([
                 'submission_id' => $submission->id,
@@ -44,6 +53,21 @@ class AuthorRevisionController extends Controller
                 'version' => $newVersion,
                 'uploaded_by' => $request->user()->id,
             ]);
+
+            if ($blinded) {
+                $blindedPath = $blinded->store('submissions/'.$submission->id, SubmissionFile::DISK);
+
+                SubmissionFile::query()->create([
+                    'submission_id' => $submission->id,
+                    'file_type' => SubmissionFileType::BlindedManuscript,
+                    'original_name' => $blinded->getClientOriginalName(),
+                    'storage_path' => $blindedPath,
+                    'mime_type' => $blinded->getClientMimeType() ?? 'application/octet-stream',
+                    'file_size' => $blinded->getSize(),
+                    'version' => $newVersion,
+                    'uploaded_by' => $request->user()->id,
+                ]);
+            }
 
             $updates = [
                 'version' => $newVersion,

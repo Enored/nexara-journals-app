@@ -2,7 +2,7 @@
 
 @section('title', Str::limit($submission->title, 48))
 @section('pageTitle', $submission->title)
-@section('pageDescription', $submission->journal->name . ' · ' . str_replace('_', ' ', $submission->status->value))
+@section('pageDescription', $submission->journal->name . ' · ' . $submission->status->label())
 
 @section('content')
     <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -38,6 +38,13 @@
                 </section>
             @endif
 
+            @if ($submission->decision_letter && in_array($submission->status, [\App\Enums\SubmissionStatus::RevisionRequested, \App\Enums\SubmissionStatus::Rejected]))
+                <section class="dash-card border-slate-200 p-6">
+                    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">Editor's note</h2>
+                    <p class="mt-2 whitespace-pre-line text-sm text-slate-700">{{ $submission->decision_letter }}</p>
+                </section>
+            @endif
+
             @can('submitRevision', $submission)
                 <section class="dash-card border-amber-200 bg-amber-50/60 p-6">
                     <h2 class="text-lg font-semibold text-slate-900">Submit your revision</h2>
@@ -48,6 +55,16 @@
                             <label class="dash-field-label">Revised manuscript file</label>
                             <input type="file" name="manuscript" required accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="mt-1 block w-full text-sm text-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-teal-700 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90">
                         </div>
+                        @if ($submission->journal->review_model->hidesAuthorFromReviewer())
+                            <div class="dash-field">
+                                <label class="dash-field-label">Anonymized manuscript <span class="text-rose-600">*</span></label>
+                                <input type="file" name="blinded_manuscript" required accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="mt-1 block w-full text-sm text-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-slate-700 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:opacity-90">
+                                <p class="mt-1 text-xs text-slate-500">Double-blind review: also upload a copy with author names, affiliations, and identifying acknowledgements removed. Reviewers only see this version.</p>
+                                @error('blinded_manuscript')
+                                    <p class="mt-1 text-xs text-rose-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endif
                         <x-dash.input name="title" label="Title (optional — leave blank to keep current)" :value="old('title', $submission->title)" />
                         <x-dash.textarea name="abstract" label="Abstract (optional)" rows="5">{{ old('abstract', $submission->abstract) }}</x-dash.textarea>
                         <x-dash.input name="keywords" label="Keywords (optional, comma-separated)" :value="old('keywords', implode(', ', $submission->keywords ?? []))" />

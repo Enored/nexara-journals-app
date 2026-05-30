@@ -48,7 +48,7 @@ class AuthorManuscriptSubmissionTest extends TestCase
         $submission = Submission::query()->where('author_id', $author->id)->first();
         $this->assertNotNull($submission);
         $this->assertSame($journal->id, $submission->journal_id);
-        $this->assertSame(SubmissionStatus::Submitted, $submission->status);
+        $this->assertSame(SubmissionStatus::Screening, $submission->status);
         $this->assertSame(['testing', 'journals', 'software'], $submission->keywords);
 
         $stored = SubmissionFile::query()->where('submission_id', $submission->id)->first();

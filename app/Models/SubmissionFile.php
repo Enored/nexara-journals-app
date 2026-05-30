@@ -11,6 +11,12 @@ class SubmissionFile extends Model
 {
     use HasUuids;
 
+    /**
+     * Storage disk for manuscript files. Centralized here so swapping the
+     * local disk for cloud/object storage later is a one-line change.
+     */
+    public const DISK = 'local';
+
     protected $fillable = [
         'submission_id',
         'file_type',

@@ -29,7 +29,7 @@
         <x-dash.app-search type="select" name="status" id="author-filter-status" icon="circle-small">
             <option value="">All statuses</option>
             @foreach ($statuses as $status)
-                <option value="{{ $status->value }}" @selected($filters['status'] === $status)>{{ str_replace('_', ' ', $status->value) }}</option>
+                <option value="{{ $status->value }}" @selected($filters['status'] === $status)>{{ $status->label() }}</option>
             @endforeach
         </x-dash.app-search>
         @if ($hasActiveFilters)

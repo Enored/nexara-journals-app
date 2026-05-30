@@ -36,7 +36,7 @@ class JournalSubmissionWebController extends Controller
             'abstract' => $data['abstract'],
             'keywords' => $keywords,
             'article_type' => $data['article_type'],
-            'status' => SubmissionStatus::Submitted,
+            'status' => SubmissionStatus::Screening,
             'version' => 1,
             'submitted_at' => now(),
         ]);

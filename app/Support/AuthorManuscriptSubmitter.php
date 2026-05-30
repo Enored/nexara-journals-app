@@ -24,7 +24,8 @@ final class AuthorManuscriptSubmitter
      *     abstract: string,
      *     keywords: string,
      *     article_type: string,
-     *     manuscript: UploadedFile
+     *     manuscript: UploadedFile,
+     *     blinded_manuscript?: UploadedFile|null
      * }  $data
      */
     public static function submit(array $data, User $author): Submission
@@ -49,8 +50,15 @@ final class AuthorManuscriptSubmitter
         }
 
         $file = $data['manuscript'];
+        $blinded = $data['blinded_manuscript'] ?? null;
 
-        return DB::transaction(function () use ($journal, $author, $data, $keywords, $file) {
+        if ($journal->review_model->hidesAuthorFromReviewer() && ! $blinded instanceof UploadedFile) {
+            throw ValidationException::withMessages([
+                'blinded_manuscript' => 'This journal uses double-blind review. Upload an anonymized manuscript with author names, affiliations, and acknowledgements removed.',
+            ]);
+        }
+
+        return DB::transaction(function () use ($journal, $author, $data, $keywords, $file, $blinded) {
             $submission = Submission::query()->create([
                 'journal_id' => $journal->id,
                 'author_id' => $author->id,
@@ -58,23 +66,16 @@ final class AuthorManuscriptSubmitter
                 'abstract' => $data['abstract'],
                 'keywords' => $keywords,
                 'article_type' => $data['article_type'],
-                'status' => SubmissionStatus::Submitted,
+                'status' => SubmissionStatus::Screening,
                 'version' => 1,
                 'submitted_at' => now(),
             ]);
 
-            $path = $file->store('submissions/'.$submission->id, 'local');
+            self::storeFile($submission, $file, SubmissionFileType::Manuscript, 1, $author->id);
 
-            SubmissionFile::query()->create([
-                'submission_id' => $submission->id,
-                'file_type' => SubmissionFileType::Manuscript,
-                'original_name' => $file->getClientOriginalName(),
-                'storage_path' => $path,
-                'mime_type' => $file->getClientMimeType() ?? 'application/octet-stream',
-                'file_size' => $file->getSize(),
-                'version' => 1,
-                'uploaded_by' => $author->id,
-            ]);
+            if ($blinded instanceof UploadedFile) {
+                self::storeFile($submission, $blinded, SubmissionFileType::BlindedManuscript, 1, $author->id);
+            }
 
             SubmissionVersionRecorder::record($submission->fresh());
 
@@ -97,5 +98,26 @@ final class AuthorManuscriptSubmitter
 
             return $submission->fresh(['journal']);
         });
+    }
+
+    private static function storeFile(
+        Submission $submission,
+        UploadedFile $file,
+        SubmissionFileType $type,
+        int $version,
+        string $uploadedBy,
+    ): void {
+        $path = $file->store('submissions/'.$submission->id, SubmissionFile::DISK);
+
+        SubmissionFile::query()->create([
+            'submission_id' => $submission->id,
+            'file_type' => $type,
+            'original_name' => $file->getClientOriginalName(),
+            'storage_path' => $path,
+            'mime_type' => $file->getClientMimeType() ?? 'application/octet-stream',
+            'file_size' => $file->getSize(),
+            'version' => $version,
+            'uploaded_by' => $uploadedBy,
+        ]);
     }
 }

@@ -2,7 +2,7 @@
 
 @section('title', Str::limit($submission->title, 48))
 @section('pageTitle', $submission->title)
-@section('pageDescription', $submission->journal->name . ' · ' . $submission->author->name . ' · ' . str_replace('_', ' ', $submission->status->value))
+@section('pageDescription', $submission->journal->name . ' · ' . $submission->author->name . ' · ' . $submission->status->label())
 
 @section('content')
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -38,6 +38,48 @@
                     </div>
                 </div>
             @endif
+
+            @can('screen', $submission)
+                <div class="card border-warning mb-3" style="background: #fffbeb;">
+                    <div class="card-body">
+                        <h5 class="card-title">Pre-review screening</h5>
+                        <p class="text-muted fs-sm mb-3">
+                            Download and check the manuscript before it goes to reviewers.
+                            @if ($submission->journal->review_model->hidesAuthorFromReviewer())
+                                This journal is <strong>double-blind</strong> — confirm the anonymized file removes author names, affiliations, and identifying acknowledgements. Reviewers only receive that file.
+                            @endif
+                        </p>
+
+                        <form method="POST" action="{{ platform_route('editor.submissions.send-for-review', $submission) }}" class="mb-3">
+                            @csrf
+                            <x-dash.button type="submit" class="btn-primary">Send for peer review</x-dash.button>
+                            <span class="text-muted fs-xs ms-2">Clears screening; you can then assign reviewers.</span>
+                        </form>
+
+                        <hr class="my-3">
+
+                        <label class="form-label fs-sm fw-medium">Note to author</label>
+                        <p class="text-muted fs-xs mb-2">Used when returning for changes or desk-rejecting.</p>
+                        <textarea id="screening-note" rows="3" class="form-control form-control-sm @error('note') is-invalid @enderror" placeholder="Explain what must be fixed (e.g. remove author names from the anonymized file), or the reason for desk rejection.">{{ old('note') }}</textarea>
+                        @error('note')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <form method="POST" action="{{ platform_route('editor.submissions.return-to-author', $submission) }}" onsubmit="this.querySelector('[name=note]').value = document.getElementById('screening-note').value">
+                                @csrf
+                                <input type="hidden" name="note">
+                                <x-dash.button type="submit" class="btn-warning">Return to author</x-dash.button>
+                            </form>
+                            <form method="POST" action="{{ platform_route('editor.submissions.desk-reject', $submission) }}" onsubmit="this.querySelector('[name=note]').value = document.getElementById('screening-note').value">
+                                @csrf
+                                <input type="hidden" name="note">
+                                <x-dash.button type="submit" class="btn-outline-danger">Desk reject</x-dash.button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endcan
 
             @can('assignReviewer', $submission)
                 <div class="card border-dashed mb-3">

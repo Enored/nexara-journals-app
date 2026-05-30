@@ -42,6 +42,7 @@ class RoleDashboardController extends Controller
             'pageDescription' => 'Overview and shortcuts for editorial work.',
             'stats' => [
                 'in_progress' => (clone $statsBase)->whereIn('status', [
+                    SubmissionStatus::Screening,
                     SubmissionStatus::Submitted,
                     SubmissionStatus::UnderReview,
                     SubmissionStatus::RevisionRequested,

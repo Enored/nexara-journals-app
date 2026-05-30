@@ -39,6 +39,7 @@ class EditorPipelineController extends Controller
         $stats = [
             'total' => (clone $statsBase)->count(),
             'in_progress' => (clone $statsBase)->whereIn('status', [
+                SubmissionStatus::Screening,
                 SubmissionStatus::Submitted,
                 SubmissionStatus::UnderReview,
                 SubmissionStatus::RevisionRequested,

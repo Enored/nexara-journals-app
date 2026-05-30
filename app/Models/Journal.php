@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ReviewModel;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,12 +13,20 @@ class Journal extends Model
 
     protected $fillable = [
         'name',
+        'abbreviation',
         'subdomain',
-        'issn',
+        'e_issn',
+        'p_issn',
+        'doi_prefix',
+        'excerpt',
         'description',
-        'logo_path',
+        'cover_image_url',
         'primary_color',
         'submission_guidelines',
+        'review_model',
+        'frequency',
+        'license_type',
+        'contact_email',
         'is_active',
     ];
 
@@ -25,6 +34,7 @@ class Journal extends Model
     {
         return [
             'is_active' => 'boolean',
+            'review_model' => ReviewModel::class,
         ];
     }
 

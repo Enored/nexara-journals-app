@@ -13,7 +13,7 @@
             <tr>
                 <td class="fw-medium">{{ $journal->name }}</td>
                 <td><code class="fs-xs text-muted">{{ $journal->subdomain }}</code></td>
-                <td class="text-muted">{{ $journal->issn ?? '—' }}</td>
+                <td class="text-muted">{{ $journal->p_issn ?? '—' }}</td>
                 <td>
                     @if ($journal->is_active)
                         <span class="badge badge-soft-success">Active</span>

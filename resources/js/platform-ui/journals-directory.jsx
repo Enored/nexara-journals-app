@@ -1,23 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { router, usePage } from '@inertiajs/react';
 import { LayoutGrid, List, Search, X } from 'lucide-react';
 import { SiteHeader } from '../shared/site-header';
 import { Footer } from '../journal-ui/archive-sidebar';
 
 const SORTS = {
-    impact: {
-        label: 'Impact factor',
-        fn: (a, b) => parseImpact(b.impact) - parseImpact(a.impact),
-    },
-    articles: { label: 'Most articles', fn: (a, b) => b.articles - a.articles },
-    az: { label: 'A–Z', fn: (a, b) => a.name.localeCompare(b.name) },
-    newest: { label: 'Newest', fn: (a, b) => b.est - a.est },
-    oldest: { label: 'Established', fn: (a, b) => a.est - b.est },
+    az: 'A–Z',
+    za: 'Z–A',
+    newest: 'Newest',
+    oldest: 'Oldest',
 };
-
-function parseImpact(value) {
-    const n = parseFloat(value);
-    return Number.isNaN(n) ? -1 : n;
-}
 
 function DirMasthead({ press }) {
     return (
@@ -28,8 +20,8 @@ function DirMasthead({ press }) {
                 </div>
                 <h1>Journals</h1>
                 <p className="blurb">
-                    Every Nexara journal is free to read and free to publish in. Browse the full
-                    collection — filter by discipline, sort by impact, or search by name and scope.
+                    Every {press.name} journal is free to read and free to publish in. Browse the full
+                    collection — search by name and scope, or sort the list to your liking.
                 </p>
                 <div className="ms-stats">
                     <div className="s">
@@ -56,16 +48,11 @@ function DirMasthead({ press }) {
 
 function DirCard({ journal, index }) {
     return (
-        <a
-            href={journal.url}
-            className={`jcard plain ${index % 5 === 3 ? 'light' : ''}`}
-        >
-            <div className="jcover">
-                {journal.flagship && <span className="flagship-pill">Flagship</span>}
-                <div className="jtop">
-                    <div className="toprule" />
-                    <div className="abbr">{journal.abbr}</div>
-                </div>
+        <a href={journal.url} className={`jcard plain ${index % 5 === 3 ? 'light' : ''}`}>
+            <div className={`jcover ${journal.cover ? 'has-cover' : ''}`}>
+                {journal.cover && (
+                    <img className="jcover-img" src={journal.cover} alt="" loading="lazy" aria-hidden />
+                )}
                 <div className="jbottom">
                     <div className="jname jname-x">{journal.name}</div>
                     <div className="jfield">{journal.field}</div>
@@ -73,9 +60,6 @@ function DirCard({ journal, index }) {
                 </div>
             </div>
             <div className="jmeta">
-                <span className="if">
-                    {journal.impact} <span>Impact</span>
-                </span>
                 <span className="arts">
                     {journal.articles.toLocaleString()}{' '}
                     {journal.articles === 1 ? 'article' : 'articles'}
@@ -93,16 +77,8 @@ function DirRow({ journal }) {
                 <div className="yr">&apos;{String(journal.est).slice(2)}</div>
             </div>
             <div className="jr-main">
-                <div className="jr-name">
-                    {journal.name}
-                    {journal.flagship && <span className="jr-flag">Flagship</span>}
-                </div>
+                <div className="jr-name">{journal.name}</div>
                 <div className="jr-blurb">{journal.blurb}</div>
-            </div>
-            <div className="jr-disc">{journal.discipline}</div>
-            <div className="jr-if">
-                <div className="v">{journal.impact}</div>
-                <div className="l">Impact factor</div>
             </div>
             <div className="jr-arts">
                 <div className="v">{journal.articles.toLocaleString()}</div>
@@ -112,52 +88,93 @@ function DirRow({ journal }) {
     );
 }
 
-export default function JournalsDirectory({ press, journals }) {
-    const [query, setQuery] = useState('');
-    const [discipline, setDiscipline] = useState('All');
-    const [sort, setSort] = useState('impact');
+export default function JournalsDirectory({ press, journals, pagination, filters }) {
+    const { platform } = usePage().props;
+    const journalsUrl = platform.urls.journals;
+
+    const [items, setItems] = useState(journals);
+    const [query, setQuery] = useState(filters.q ?? '');
+    const [sort, setSort] = useState(filters.sort ?? 'az');
     const [view, setView] = useState('grid');
-    const [oaOnly, setOaOnly] = useState(false);
+    const [page, setPage] = useState(pagination.page);
+    const [hasMore, setHasMore] = useState(pagination.hasMore);
+    const [total, setTotal] = useState(pagination.total);
+    const [loading, setLoading] = useState(false);
 
-    const disciplines = useMemo(() => {
-        const counts = {};
-        journals.forEach((j) => {
-            counts[j.discipline] = (counts[j.discipline] || 0) + 1;
+    const didMount = useRef(false);
+
+    // Sync from server on page 1 (initial visit, filter, sort, back/forward).
+    // Load-more keeps page > 1 props as just the new slice; appending is handled in fetchPage.
+    useEffect(() => {
+        if (pagination.page === 1) {
+            setItems(journals);
+        }
+        setPage(pagination.page);
+        setHasMore(pagination.hasMore);
+        setTotal(pagination.total);
+    }, [journals, pagination]);
+
+    const fetchPage = (next, { append }) => {
+        setLoading(true);
+        const data = {};
+        if (next.q) {
+            data.q = next.q;
+        }
+        if (next.sort && next.sort !== 'az') {
+            data.sort = next.sort;
+        }
+        if (next.page > 1) {
+            data.page = next.page;
+        }
+
+        router.get(journalsUrl, data, {
+            only: ['journals', 'pagination'],
+            preserveState: true,
+            preserveScroll: true,
+            replace: !append,
+            preserveUrl: append,
+            onSuccess: (pageObj) => {
+                const fresh = pageObj.props.journals;
+                const freshPagination = pageObj.props.pagination;
+                setItems((prev) => (append ? [...prev, ...fresh] : fresh));
+                setPage(freshPagination.page);
+                setHasMore(freshPagination.hasMore);
+                setTotal(freshPagination.total);
+            },
+            onFinish: () => setLoading(false),
         });
-        return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-    }, [journals]);
+    };
 
-    const q = query.trim().toLowerCase();
-    const filtered = useMemo(() => {
-        let list = journals.filter((j) => {
-            if (discipline !== 'All' && j.discipline !== discipline) {
-                return false;
-            }
-            if (oaOnly) {
-                return false;
-            }
-            if (
-                q &&
-                !(
-                    j.name.toLowerCase().includes(q) ||
-                    j.field.toLowerCase().includes(q) ||
-                    j.blurb.toLowerCase().includes(q) ||
-                    j.abbr.toLowerCase().includes(q) ||
-                    j.discipline.toLowerCase().includes(q)
-                )
-            ) {
-                return false;
-            }
-            return true;
-        });
-        return [...list].sort(SORTS[sort].fn);
-    }, [journals, discipline, q, sort, oaOnly]);
+    // Debounced search → page 1.
+    useEffect(() => {
+        if (!didMount.current) {
+            didMount.current = true;
+            return;
+        }
+        const handle = setTimeout(() => {
+            fetchPage({ q: query.trim(), sort, page: 1 }, { append: false });
+        }, 350);
+        return () => clearTimeout(handle);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [query]);
 
-    const hasFilters = Boolean(query || discipline !== 'All' || oaOnly);
+    const changeSort = (value) => {
+        setSort(value);
+        fetchPage({ q: query.trim(), sort: value, page: 1 }, { append: false });
+    };
+
+    const loadMore = () => {
+        if (!hasMore || loading) {
+            return;
+        }
+        fetchPage({ q: query.trim(), sort, page: page + 1 }, { append: true });
+    };
+
+    const hasFilters = Boolean(query.trim());
     const clearAll = () => {
         setQuery('');
-        setDiscipline('All');
-        setOaOnly(false);
+        setSort('az');
+        fetchPage({ q: '', sort: 'az', page: 1 }, { append: false });
     };
 
     return (
@@ -195,9 +212,9 @@ export default function JournalsDirectory({ press, journals }) {
                             <select
                                 id="journal-sort"
                                 value={sort}
-                                onChange={(e) => setSort(e.target.value)}
+                                onChange={(e) => changeSort(e.target.value)}
                             >
-                                {Object.entries(SORTS).map(([key, { label }]) => (
+                                {Object.entries(SORTS).map(([key, label]) => (
                                     <option key={key} value={key}>
                                         {label}
                                     </option>
@@ -223,33 +240,6 @@ export default function JournalsDirectory({ press, journals }) {
                             </button>
                         </div>
                     </div>
-                    <div className="dir-filters">
-                        <span className="flabel">Discipline</span>
-                        <button
-                            type="button"
-                            className={`fpill ${discipline === 'All' ? 'active' : ''}`}
-                            onClick={() => setDiscipline('All')}
-                        >
-                            All <span className="pn">{journals.length}</span>
-                        </button>
-                        {disciplines.map(([name, n]) => (
-                            <button
-                                key={name}
-                                type="button"
-                                className={`fpill ${discipline === name ? 'active' : ''}`}
-                                onClick={() => setDiscipline(name)}
-                            >
-                                {name} <span className="pn">{n}</span>
-                            </button>
-                        ))}
-                        <label
-                            className={`oa-toggle ${oaOnly ? 'on' : ''}`}
-                            onClick={() => setOaOnly(!oaOnly)}
-                        >
-                            <span className="sw" />
-                            Open access only
-                        </label>
-                    </div>
                 </div>
             </div>
 
@@ -257,9 +247,8 @@ export default function JournalsDirectory({ press, journals }) {
                 <div className="container-wide">
                     <div className="resbar">
                         <div className="rc">
-                            <b>{filtered.length}</b> {filtered.length === 1 ? 'journal' : 'journals'}
-                            {discipline !== 'All' && <span> · {discipline}</span>}
-                            {query && (
+                            <b>{total}</b> {total === 1 ? 'journal' : 'journals'}
+                            {query.trim() && (
                                 <span>
                                     {' '}
                                     · matching &ldquo;{query.trim()}&rdquo;
@@ -273,25 +262,40 @@ export default function JournalsDirectory({ press, journals }) {
                         )}
                     </div>
 
-                    {filtered.length === 0 ? (
+                    {items.length === 0 && !loading ? (
                         <div className="dir-empty">
                             <div className="big">No journals found</div>
                             <p>Try a different search term or clear your filters.</p>
-                            <button type="button" className="btn ghost" onClick={clearAll}>
-                                Clear all filters
-                            </button>
+                            {hasFilters && (
+                                <button type="button" className="btn ghost" onClick={clearAll}>
+                                    Clear all filters
+                                </button>
+                            )}
                         </div>
                     ) : view === 'grid' ? (
                         <div className="dir-grid">
-                            {filtered.map((journal, i) => (
+                            {items.map((journal, i) => (
                                 <DirCard key={journal.id} journal={journal} index={i} />
                             ))}
                         </div>
                     ) : (
                         <div className="dir-list">
-                            {filtered.map((journal) => (
+                            {items.map((journal) => (
                                 <DirRow key={journal.id} journal={journal} />
                             ))}
+                        </div>
+                    )}
+
+                    {hasMore && (
+                        <div className="dir-loadmore">
+                            <button
+                                type="button"
+                                className="btn ghost"
+                                onClick={loadMore}
+                                disabled={loading}
+                            >
+                                {loading ? 'Loading…' : 'Load more journals'}
+                            </button>
                         </div>
                     )}
                 </div>

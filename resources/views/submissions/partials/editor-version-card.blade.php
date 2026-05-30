@@ -36,9 +36,9 @@
                 <ul class="list-unstyled mb-0">
                     @foreach ($round['files'] as $file)
                         <li class="py-1 {{ !$loop->last ? 'border-bottom' : '' }}">
-                            <span class="fw-medium">{{ $file->original_name }}</span>
+                            <a href="{{ platform_route('submission-files.download', $file) }}" class="fw-medium">{{ $file->original_name }}</a>
                             <span class="d-block text-muted fs-xs">
-                                {{ $file->file_type->value }}
+                                {{ str_replace('_', ' ', $file->file_type->value) }}
                                 · {{ number_format($file->file_size / 1024, 1) }} KB
                                 · {{ $file->created_at->format('M j, Y g:i A') }}
                             </span>

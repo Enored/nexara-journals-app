@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ReturnsDashListPartial;
 use App\Http\Controllers\Controller;
 use App\Models\Journal;
 use App\Support\JournalLimit;
+use App\Support\JournalProfileRules;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -58,13 +59,15 @@ class JournalManageController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'subdomain' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9-]+$/', 'unique:journals,subdomain'],
-            'issn' => ['nullable', 'string', 'max:20'],
             'description' => ['nullable', 'string'],
             'primary_color' => ['nullable', 'string', 'max:7'],
             'submission_guidelines' => ['nullable', 'string'],
+            ...JournalProfileRules::rules(),
         ]);
 
-        Journal::query()->create($data + ['is_active' => true]);
+        Journal::query()->create(
+            JournalProfileRules::withReviewModelDefault($data) + ['is_active' => true]
+        );
 
         return redirect()->route('admin.journals.index')->with('status', 'Journal created.');
     }
@@ -79,13 +82,13 @@ class JournalManageController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'subdomain' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9-]+$/', 'unique:journals,subdomain,'.$journal->id],
-            'issn' => ['nullable', 'string', 'max:20'],
             'description' => ['nullable', 'string'],
             'primary_color' => ['nullable', 'string', 'max:7'],
             'submission_guidelines' => ['nullable', 'string'],
+            ...JournalProfileRules::rules(),
         ]);
 
-        $journal->update(array_merge($data, [
+        $journal->update(array_merge(JournalProfileRules::withoutEmptyReviewModel($data), [
             'is_active' => $request->boolean('is_active'),
         ]));
 
