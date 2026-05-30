@@ -6,7 +6,7 @@ import '../../../css/platform-home.css';
 import '../../../css/articles-directory.css';
 import '../../journal-ui/styles.css';
 
-export default function PlatformArticles({ pageTitle, press, papers, paperTypes }) {
+export default function PlatformArticles({ pageTitle, press, papers, pagination, filters, facets }) {
     return (
         <>
             <Head>
@@ -16,7 +16,13 @@ export default function PlatformArticles({ pageTitle, press, papers, paperTypes 
                     content="Search and filter peer-reviewed research across all Nexara journals."
                 />
             </Head>
-            <ArticlesDirApp press={press} papers={papers} paperTypes={paperTypes} />
+            <ArticlesDirApp
+                press={press}
+                papers={papers}
+                pagination={pagination}
+                filters={filters}
+                facets={facets}
+            />
         </>
     );
 }

@@ -55,13 +55,23 @@
                                 required
                             />
                             <x-dash.textarea label="Abstract" name="abstract" rows="5" required>{{ old('abstract') }}</x-dash.textarea>
-                            <x-dash.input
-                                label="Keywords"
-                                name="keywords"
-                                :value="old('keywords')"
-                                required
-                            />
-                            <p class="form-text text-muted mt-n3 mb-3">Separate keywords with commas.</p>
+                            <div class="mb-3">
+                                <label class="form-label" for="manuscript-keywords">Keywords</label>
+                                <input
+                                    type="text"
+                                    name="keywords"
+                                    id="manuscript-keywords"
+                                    class="form-control{{ $errors->has('keywords') ? ' is-invalid' : '' }}"
+                                    data-tag-input
+                                    value="{{ old('keywords') }}"
+                                    placeholder="Type a keyword and press Enter"
+                                    required
+                                >
+                                <div class="form-text">Press Enter or comma to add each keyword.</div>
+                                @error('keywords')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
                             <x-dash.select label="Article type" name="article_type" required>
                                 <option value="" disabled @selected(! old('article_type'))>Select type…</option>
                                 @foreach ($articleTypes as $type)

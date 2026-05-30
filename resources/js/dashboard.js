@@ -4,6 +4,7 @@ import { initAjaxModal } from './admin-ajax-modal';
 import { initConfirmModals } from './admin-confirm-modal';
 import { initDashListPartials } from './dashboard-list-partial';
 import { initBlogEditor } from './blog-editor';
+import { initTagInputs } from './tag-input';
 
 function initDashboardThemeToggle() {
     const button = document.querySelector('[data-dash-theme-toggle]');
@@ -41,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initConfirmModals();
     initDashListPartials();
     initBlogEditor();
+    initTagInputs();
 
     initAjaxModal({
         id: 'volume-create-modal',

@@ -1,5 +1,4 @@
-import Tagify from '@yaireo/tagify';
-import '@yaireo/tagify/dist/tagify.css';
+import { initTagInput } from './tag-input';
 
 export function initBlogEditor() {
     const form = document.querySelector('[data-blog-editor-form]');
@@ -90,18 +89,7 @@ function initBlogPublishSwitch(form) {
 }
 
 function initBlogTags(form) {
-    const tagsInput = form.querySelector('[data-blog-tags]');
-
-    if (!tagsInput || tagsInput.dataset.tagifyReady === 'true') {
-        return;
-    }
-
-    new Tagify(tagsInput, {
-        originalInputValueFormat: (values) => values.map((item) => item.value).join(','),
-        dropdown: { enabled: 0 },
-    });
-
-    tagsInput.dataset.tagifyReady = 'true';
+    initTagInput(form.querySelector('[data-blog-tags]'));
 }
 
 function renderPreview(previewEl, html) {

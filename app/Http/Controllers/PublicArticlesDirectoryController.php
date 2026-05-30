@@ -2,31 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\EditionStatus;
-use App\Enums\SubmissionStatus;
 use App\Models\Submission;
 use App\Support\ArticlesDirectoryPayload;
+use App\Support\PublicArticlesFilters;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class PublicArticlesDirectoryController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $articles = Submission::query()
-            ->where('status', SubmissionStatus::Published)
-            ->with(['journal', 'author', 'edition.volume'])
-            ->whereHas('journal', fn ($q) => $q->where('is_active', true))
-            ->orderByDesc('submitted_at')
-            ->get()
-            ->filter(function (Submission $article) {
-                if (! $article->edition) {
-                    return true;
-                }
+        $filters = PublicArticlesFilters::fromRequest($request);
+        $paginator = PublicArticlesFilters::paginate($filters);
 
-                return $article->edition->status === EditionStatus::Published;
-            });
-
-        return Inertia::render('Platform/Articles', ArticlesDirectoryPayload::build($articles));
+        return Inertia::render('Platform/Articles', [
+            'pageTitle' => 'Articles — '.platform_name(),
+            'press' => ArticlesDirectoryPayload::press(),
+            'papers' => collect($paginator->items())
+                ->values()
+                ->map(fn (Submission $article, int $index) => ArticlesDirectoryPayload::mapArticle($article, $index))
+                ->all(),
+            'pagination' => [
+                'page' => $paginator->currentPage(),
+                'lastPage' => $paginator->lastPage(),
+                'perPage' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
+            'filters' => $filters,
+            // Lazy: computed on full visits only, retained across paginated reloads.
+            'facets' => fn () => PublicArticlesFilters::facets(),
+        ]);
     }
 }
