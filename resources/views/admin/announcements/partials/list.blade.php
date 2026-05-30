@@ -78,7 +78,28 @@
                     {{ $announcement->expires_at?->format('M j, Y g:i A') ?? '—' }}
                 </td>
                 <td class="text-end text-nowrap">
-                    <x-dash.link :href="platform_route('admin.announcements.edit', $announcement)">Edit</x-dash.link>
+                    @php
+                        $editPayload = [
+                            'scope' => $announcement->scope->value,
+                            'journal_id' => $announcement->journal_id,
+                            'category' => $announcement->category->value,
+                            'type' => $announcement->type->value,
+                            'status' => $announcement->status->value,
+                            'title' => $announcement->title,
+                            'body' => $announcement->body,
+                            'url' => $announcement->url,
+                            'expires_at' => $announcement->expires_at?->timezone(config('app.timezone'))->format('Y-m-d\TH:i'),
+                        ];
+                    @endphp
+                    <button
+                        type="button"
+                        class="btn btn-link p-0 border-0 link-primary fw-medium"
+                        data-announcement-edit-open
+                        data-action="{{ platform_route('admin.announcements.update', $announcement) }}"
+                        data-announcement="{{ json_encode($editPayload, JSON_HEX_APOS | JSON_HEX_QUOT) }}"
+                    >
+                        Edit
+                    </button>
                     <span class="text-muted mx-1">·</span>
 
                     <form
@@ -113,7 +134,7 @@
                         :description="$hasActiveFilters ? 'Try adjusting your search or filters.' : 'Create your first announcement to show on journal home pages.'"
                     >
                         @unless ($hasActiveFilters)
-                            <x-dash.button :href="platform_route('admin.announcements.create')">New announcement</x-dash.button>
+                            <x-dash.button type="button" data-bs-toggle="modal" data-bs-target="#announcement-create-modal">New announcement</x-dash.button>
                         @endunless
                     </x-dash.empty>
                 </td>

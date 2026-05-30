@@ -152,9 +152,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('blogs/{blog}', [BlogManageController::class, 'destroy'])->name('blogs.destroy');
 
         Route::get('announcements', [AnnouncementManageController::class, 'index'])->name('announcements.index');
-        Route::get('announcements/create', [AnnouncementManageController::class, 'create'])->name('announcements.create');
         Route::post('announcements', [AnnouncementManageController::class, 'store'])->name('announcements.store');
-        Route::get('announcements/{announcement}/edit', [AnnouncementManageController::class, 'edit'])->name('announcements.edit');
         Route::put('announcements/{announcement}', [AnnouncementManageController::class, 'update'])->name('announcements.update');
         Route::delete('announcements/{announcement}', [AnnouncementManageController::class, 'destroy'])->name('announcements.destroy');
 

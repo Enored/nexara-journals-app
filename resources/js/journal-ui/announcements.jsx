@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 
 const fmtDate = (iso) =>
     new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -39,11 +40,12 @@ export function AnnouncementsSection({ announcements, onOpenAll, onOpenOne }) {
                         </h2>
                     </div>
                     <button type="button" className="view-all" onClick={onOpenAll}>
-                        View all announcements <span className="arrow">→</span>
+                        View all announcements
+                        <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
                     </button>
                 </div>
 
-                <div className="ann-grid">
+                <div className="ann-grid" data-count={recent.length}>
                     {recent.map((a) => (
                         <button
                             type="button"
@@ -129,6 +131,7 @@ export function AnnouncementsDialog({ journalName, announcements, initialId, onC
                             <article key={a.id} id={`ann-${a.id}`} className={`ann-item ann-item--${a.type}`}>
                                 <div className="ann-meta">
                                     <span className={`ann-type ${a.type}`}>{a.category}</span>
+                                    <span className="date">Posted {fmtDate(a.published)}</span>
                                 </div>
                                 <h4>{a.title}</h4>
                                 <p className="ann-excerpt-full">{a.excerpt}</p>
@@ -144,9 +147,6 @@ export function AnnouncementsDialog({ journalName, announcements, initialId, onC
                                         </a>
                                     </p>
                                 )}
-                                <div className="ann-foot">
-                                    <span className="date">Posted {fmtDate(a.published)}</span>
-                                </div>
                             </article>
                         ))
                     )}

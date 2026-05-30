@@ -35,16 +35,9 @@ class AnnouncementManageController extends Controller
         );
     }
 
-    public function create(): View
-    {
-        return view('admin.announcements.create', [
-            'journals' => AnnouncementRules::journalOptions(),
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
-        $data = $this->validated($request);
+        $data = $this->validated($request, 'create');
         Announcement::query()->create($data);
 
         return redirect()
@@ -52,17 +45,10 @@ class AnnouncementManageController extends Controller
             ->with('status', 'Announcement created.');
     }
 
-    public function edit(Announcement $announcement): View
-    {
-        return view('admin.announcements.edit', [
-            'announcement' => $announcement,
-            'journals' => AnnouncementRules::journalOptions(),
-        ]);
-    }
-
     public function update(Request $request, Announcement $announcement): RedirectResponse
     {
-        $announcement->update($this->validated($request));
+        $data = $this->validated($request, 'edit', $announcement);
+        $announcement->update($data);
 
         return redirect()
             ->route('admin.announcements.index')
@@ -79,15 +65,28 @@ class AnnouncementManageController extends Controller
     }
 
     /**
+     * Validate the request, redirecting back to the index (reopening the
+     * relevant modal) when validation fails.
+     *
      * @return array<string, mixed>
      */
-    private function validated(Request $request): array
+    private function validated(Request $request, string $context, ?Announcement $announcement = null): array
     {
         $validator = validator($request->all(), AnnouncementRules::rules());
         AnnouncementRules::configureValidator($validator);
 
         if ($validator->fails()) {
-            throw new ValidationException($validator);
+            $redirect = redirect()
+                ->route('admin.announcements.index')
+                ->withErrors($validator)
+                ->withInput()
+                ->with('announcement_form', $context);
+
+            if ($announcement) {
+                $redirect->with('announcement_editing_id', $announcement->id);
+            }
+
+            throw new ValidationException($validator, $redirect);
         }
 
         return AnnouncementRules::normalize($validator->validated());

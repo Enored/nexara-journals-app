@@ -1,23 +1,33 @@
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const scopeSelect = document.getElementById('announcement-scope');
-        const journalGroup = document.getElementById('announcement-journal-group');
-        const journalSelect = document.getElementById('announcement-journal-id');
+    (() => {
+        const syncScope = (scopeSelect) => {
+            const container = scopeSelect.closest('form') || document;
+            const group = container.querySelector('[data-announcement-journal-group]');
+            const journalSelect = container.querySelector('[data-announcement-journal-select]');
 
-        if (!scopeSelect || !journalGroup || !journalSelect) {
-            return;
-        }
+            if (!group || !journalSelect) {
+                return;
+            }
 
-        const sync = () => {
             const perJournal = scopeSelect.value === 'per_journal';
-            journalGroup.classList.toggle('d-none', !perJournal);
+            group.classList.toggle('d-none', !perJournal);
             journalSelect.required = perJournal;
             if (!perJournal) {
                 journalSelect.value = '';
             }
         };
 
-        scopeSelect.addEventListener('change', sync);
-        sync();
-    });
+        // Delegated change handler — works for statically rendered and AJAX-injected forms.
+        document.addEventListener('change', (event) => {
+            const scopeSelect = event.target.closest('[data-announcement-scope]');
+            if (scopeSelect) {
+                syncScope(scopeSelect);
+            }
+        });
+
+        // Initial sync for any scope selects already present on load.
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-announcement-scope]').forEach(syncScope);
+        });
+    })();
 </script>
