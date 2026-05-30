@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import BlogPostPage from './blog-post';
 
-export default function BlogPostApp({ post, posts }) {
+export default function BlogPostApp({ post, related }) {
     const [toast, setToast] = useState(null);
     const [progress, setProgress] = useState(0);
 
@@ -44,7 +44,7 @@ export default function BlogPostApp({ post, posts }) {
             <div className="read-progress" aria-hidden>
                 <div className="fill" style={{ width: `${progress}%` }} />
             </div>
-            <BlogPostPage post={post} posts={posts} onShare={onShare} />
+            <BlogPostPage post={post} related={related} onShare={onShare} />
             {toast && <div className="toast">✓ {toast}</div>}
         </>
     );

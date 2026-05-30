@@ -1,9 +1,15 @@
+import Tagify from '@yaireo/tagify';
+import '@yaireo/tagify/dist/tagify.css';
+
 export function initBlogEditor() {
     const form = document.querySelector('[data-blog-editor-form]');
 
     if (!form) {
         return;
     }
+
+    initBlogTags(form);
+    initBlogPublishSwitch(form);
 
     const editorHost = form.querySelector('[data-blog-editor]');
     const contentInput = form.querySelector('[data-blog-content-input]');
@@ -65,6 +71,37 @@ export function initBlogEditor() {
             }
         });
     });
+}
+
+function initBlogPublishSwitch(form) {
+    const input = form.querySelector('#blog-is-published');
+    const label = form.querySelector('label[for="blog-is-published"]');
+
+    if (!input || !label) {
+        return;
+    }
+
+    const sync = () => {
+        label.textContent = input.checked ? 'Published' : 'Draft';
+    };
+
+    input.addEventListener('change', sync);
+    sync();
+}
+
+function initBlogTags(form) {
+    const tagsInput = form.querySelector('[data-blog-tags]');
+
+    if (!tagsInput || tagsInput.dataset.tagifyReady === 'true') {
+        return;
+    }
+
+    new Tagify(tagsInput, {
+        originalInputValueFormat: (values) => values.map((item) => item.value).join(','),
+        dropdown: { enabled: 0 },
+    });
+
+    tagsInput.dataset.tagifyReady = 'true';
 }
 
 function renderPreview(previewEl, html) {

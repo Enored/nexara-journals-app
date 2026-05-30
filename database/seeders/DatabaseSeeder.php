@@ -92,5 +92,7 @@ class DatabaseSeeder extends Seeder
             'invited_at' => now()->subDay(),
             'responded_at' => now()->subDay(),
         ]);
+
+        $this->call(BlogSeeder::class);
     }
 }

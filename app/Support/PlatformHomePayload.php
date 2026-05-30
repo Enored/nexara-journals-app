@@ -77,8 +77,7 @@ class PlatformHomePayload
             'journals' => $journalsPayload,
             'featured' => $featured,
             'latest' => $latestPayload,
-            'posts' => BlogPayload::forPublic(),
-            'postCategories' => BlogPayload::CATEGORIES,
+            'posts' => BlogPayload::recent(3),
         ];
     }
 

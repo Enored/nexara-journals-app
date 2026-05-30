@@ -10,6 +10,10 @@
 .lead-post .lead-cover .post-cover-placeholder { min-height: 420px; }
 .post-card .pcover .post-cover-placeholder { aspect-ratio: 16/10; min-height: 0; }
 
+.post-cover-image { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lead-post .lead-cover .post-cover-image { min-height: 420px; }
+.post-card .pcover .post-cover-image { aspect-ratio: 16/10; }
+
 /* ---------- Blog masthead ---------- */
 .blog-masthead {
   background: var(--ink);

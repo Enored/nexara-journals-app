@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { Search, X } from 'lucide-react';
 import { SiteHeader } from '../shared/site-header';
 import { Footer } from '../journal-ui/archive-sidebar';
@@ -74,7 +74,7 @@ export function LeadPost({ post, onOpen }) {
                     tabIndex={0}
                 >
                     <div className="lead-cover">
-                        <PostCover />
+                        <PostCover src={post.cover} alt={post.title} />
                     </div>
                     <div className="lead-body">
                         <div className="lead-tag">
@@ -85,7 +85,9 @@ export function LeadPost({ post, onOpen }) {
                         <p className="lead-excerpt">{post.excerpt}</p>
                         <div className="lead-meta">
                             <span className="by">{post.author}</span>
-                            <span className="role">· {post.role}</span>
+                            {post.authorAffiliation && (
+                                <span className="role">· {post.authorAffiliation}</span>
+                            )}
                             <span className="dot">·</span>
                             <span>{post.date}</span>
                             <span className="dot">·</span>
@@ -108,7 +110,7 @@ export function PostCard({ post, onOpen }) {
             tabIndex={0}
         >
             <div className="pcover">
-                <PostCover />
+                <PostCover src={post.cover} alt={post.title} />
             </div>
             <div className="pcat">{post.category}</div>
             <h3>{post.title}</h3>
@@ -152,41 +154,31 @@ export function SubscribeStrip({ onSubscribe }) {
     );
 }
 
-export function BlogIndex({ posts, categories, onOpenPost, onToast }) {
-    const [active, setActive] = useState('All');
-    const [query, setQuery] = useState('');
+export function BlogIndex({
+    items,
+    categories,
+    counts,
+    active,
+    query,
+    setQuery,
+    onPick,
+    onClearSearch,
+    total,
+    hasMore,
+    loading,
+    onLoadMore,
+    onOpenPost,
+    onToast,
+}) {
+    const searching = (query ?? '').trim().length > 0;
 
-    const sorted = useMemo(
-        () => [...posts].sort((a, b) => new Date(b.published) - new Date(a.published)),
-        [posts],
+    const visibleCategories = categories.filter(
+        (c) => c === 'All' || (counts[c] ?? 0) > 0 || c === active,
     );
 
-    const counts = useMemo(() => {
-        const c = { All: sorted.length };
-        categories.forEach((cat) => {
-            if (cat !== 'All') {
-                c[cat] = sorted.filter((p) => p.category === cat).length;
-            }
-        });
-        return c;
-    }, [sorted, categories]);
-
-    const visibleCategories = categories.filter((c) => c === 'All' || (counts[c] ?? 0) > 0);
-
-    const byCategory = active === 'All' ? sorted : sorted.filter((p) => p.category === active);
-    const q = query.trim().toLowerCase();
-    const searching = q.length > 0;
-    const matches = (p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.excerpt.toLowerCase().includes(q) ||
-        p.author.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        (p.tags || []).some((t) => t.toLowerCase().includes(q)) ||
-        (p.content || []).some((para) => para.toLowerCase().includes(q));
-
-    const filtered = searching ? byCategory.filter(matches) : byCategory;
-    const lead = searching ? null : filtered[0];
-    const rest = searching ? filtered : filtered.slice(1);
+    // The first post is featured as the lead while browsing (not while searching).
+    const lead = !searching ? items[0] : null;
+    const rest = lead ? items.slice(1) : items;
 
     let barTitle;
     if (searching) {
@@ -207,10 +199,10 @@ export function BlogIndex({ posts, categories, onOpenPost, onToast }) {
                 categories={visibleCategories}
                 counts={counts}
                 active={active}
-                onPick={setActive}
+                onPick={onPick}
                 query={query}
                 setQuery={setQuery}
-                postCount={sorted.length}
+                postCount={counts.All ?? total}
             />
 
             {!searching && <LeadPost post={lead} onOpen={onOpenPost} />}
@@ -220,24 +212,17 @@ export function BlogIndex({ posts, categories, onOpenPost, onToast }) {
                     <div className="bar">
                         <h2>{barTitle}</h2>
                         <span className="count">
-                            {filtered.length} {filtered.length === 1 ? 'post' : 'posts'}
+                            {total} {total === 1 ? 'post' : 'posts'}
                         </span>
                     </div>
 
-                    {filtered.length === 0 && (
+                    {items.length === 0 && !loading && (
                         <div className="posts-empty">
                             {searching ? (
                                 <span>
                                     No posts match <em>&ldquo;{query.trim()}&rdquo;</em>
                                     {active !== 'All' && <span> in {active}</span>}.{' '}
-                                    <button
-                                        type="button"
-                                        className="link-btn"
-                                        onClick={() => {
-                                            setQuery('');
-                                            setActive('All');
-                                        }}
-                                    >
+                                    <button type="button" className="link-btn" onClick={onClearSearch}>
                                         Clear search
                                     </button>
                                 </span>
@@ -245,10 +230,6 @@ export function BlogIndex({ posts, categories, onOpenPost, onToast }) {
                                 'No posts in this category yet.'
                             )}
                         </div>
-                    )}
-
-                    {filtered.length > 0 && rest.length === 0 && (
-                        <div className="posts-empty">This is the only post in this category so far.</div>
                     )}
 
                     {rest.length > 0 && (
@@ -259,7 +240,20 @@ export function BlogIndex({ posts, categories, onOpenPost, onToast }) {
                         </div>
                     )}
 
-                    {!searching && active === 'All' && rest.length > 0 && (
+                    {hasMore && (
+                        <div className="load-more">
+                            <button
+                                type="button"
+                                className="btn ghost"
+                                onClick={onLoadMore}
+                                disabled={loading}
+                            >
+                                {loading ? 'Loading…' : 'Load more posts'}
+                            </button>
+                        </div>
+                    )}
+
+                    {!hasMore && !searching && items.length > 0 && (
                         <div className="load-more">
                             <button
                                 type="button"
