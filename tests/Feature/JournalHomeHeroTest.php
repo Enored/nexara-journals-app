@@ -45,6 +45,7 @@ class JournalHomeHeroTest extends TestCase
                 ->where('journal.license', 'CC BY 4.0')
                 ->where('journal.contactEmail', 'editor@cognition.test')
                 ->missing('journal.reviewType')
+                ->has('announcements', 0)
             );
     }
 

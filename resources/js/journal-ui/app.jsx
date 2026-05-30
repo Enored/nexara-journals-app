@@ -7,10 +7,12 @@ import { JournalMasthead, OpenAccessStory, SubNav } from './journal-chrome';
 import { SiteHeader } from '../shared/site-header';
 import { JournalDataProvider, useJournalData } from './data-context';
 
-export default function App({ journal, articles, issues, subjects }) {
+import { AnnouncementsDialog, AnnouncementsSection } from './announcements';
+
+export default function App({ journal, articles, issues, subjects, announcements = [] }) {
   const data = useMemo(
-    () => ({ journal, articles, issues, subjects }),
-    [journal, articles, issues, subjects],
+    () => ({ journal, articles, issues, subjects, announcements }),
+    [journal, articles, issues, subjects, announcements],
   );
 
   return (
@@ -21,13 +23,14 @@ export default function App({ journal, articles, issues, subjects }) {
 }
 
 function AppShell() {
-  const { articles, journal } = useJournalData();
+  const { articles, journal, announcements } = useJournalData();
   const [view, setView] = useState('home'); // 'home' | 'search'
   const [citeArticle, setCiteArticle] = useState(null);
   const [saved, setSaved] = useState(new Set());
   const [toast, setToast] = useState(null);
   const [query, setQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [announce, setAnnounce] = useState(null); // null | { id?: string }
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -92,7 +95,11 @@ function AppShell() {
           <JournalMasthead onSubmit={() => showToast('Submission portal (demo)')} />
           <SubNav query={query} setQuery={setQuery} onSearch={handleSearch} view={view} onNav={handleNav} />
 
-          {/* <OpenAccessStory /> */}
+          <AnnouncementsSection
+            announcements={announcements}
+            onOpenAll={() => setAnnounce({})}
+            onOpenOne={(a) => setAnnounce({ id: a.id })}
+          />
 
           <section className="section">
             <div className="container">
@@ -176,6 +183,14 @@ function AppShell() {
       <Footer />
 
       {citeArticle && <CiteModal article={citeArticle} onClose={() => setCiteArticle(null)} />}
+      {announce && (
+        <AnnouncementsDialog
+          journalName={journal.name}
+          announcements={announcements}
+          initialId={announce.id}
+          onClose={() => setAnnounce(null)}
+        />
+      )}
       {toast && <div className="toast">✓ {toast}</div>}
 
     </div>);

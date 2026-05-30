@@ -7,7 +7,9 @@ use App\Enums\SubmissionStatus;
 use App\Models\Edition;
 use App\Models\Journal;
 use App\Models\Submission;
+use App\Support\AboutPayload;
 use App\Support\ArticlePayload;
+use App\Support\JournalAnnouncementsPayload;
 use App\Support\PlatformHomePayload;
 use Illuminate\Http\Response;
 use Inertia\Inertia;
@@ -178,6 +180,7 @@ class HomeController extends Controller
             'articles' => $articlePayload->values(),
             'issues' => $issuesPayload,
             'subjects' => $subjectsPayload,
+            'announcements' => JournalAnnouncementsPayload::forJournal($journal),
         ]);
     }
 }

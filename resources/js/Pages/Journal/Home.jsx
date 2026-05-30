@@ -2,9 +2,10 @@ import React from 'react';
 import { Head } from '@inertiajs/react';
 import App from '../../journal-ui/app';
 import '../../../css/journal-home.css';
+import '../../../css/announcements.css';
 import '../../journal-ui/styles.css';
 
-export default function JournalHome({ pageTitle, journal, articles, issues, subjects }) {
+export default function JournalHome({ pageTitle, journal, articles, issues, subjects, announcements }) {
     return (
         <>
             <Head>
@@ -16,6 +17,7 @@ export default function JournalHome({ pageTitle, journal, articles, issues, subj
                 articles={articles}
                 issues={issues}
                 subjects={subjects}
+                announcements={announcements}
             />
         </>
     );

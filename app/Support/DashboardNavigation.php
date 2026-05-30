@@ -45,6 +45,7 @@ class DashboardNavigation
                 ['key' => 'admin-journals', 'label' => 'Journals', 'route' => platform_route('admin.journals.index'), 'icon' => 'book-open'],
                 ['key' => 'admin-users', 'label' => 'Users & roles', 'route' => platform_route('admin.users.index'), 'icon' => 'users'],
                 ['key' => 'admin-blogs', 'label' => 'Blogs', 'route' => platform_route('admin.blogs.index'), 'icon' => 'notebook-pen'],
+                ['key' => 'admin-announcements', 'label' => 'Announcements', 'route' => platform_route('admin.announcements.index'), 'icon' => 'megaphone'],
                 ['key' => 'admin-settings', 'label' => 'System settings', 'route' => platform_route('admin.settings.edit'), 'icon' => 'settings'],
             ],
         ];
