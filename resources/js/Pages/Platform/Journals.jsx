@@ -6,7 +6,7 @@ import '../../../css/platform-home.css';
 import '../../../css/journals-directory.css';
 import '../../journal-ui/styles.css';
 
-export default function PlatformJournals({ pageTitle, press, journals }) {
+export default function PlatformJournals({ pageTitle, press, journals, pagination, filters }) {
     return (
         <>
             <Head>
@@ -16,7 +16,12 @@ export default function PlatformJournals({ pageTitle, press, journals }) {
                     content="Browse all diamond open-access journals from Nexara Research Press."
                 />
             </Head>
-            <JournalsDirApp press={press} journals={journals} />
+            <JournalsDirApp
+                press={press}
+                journals={journals}
+                pagination={pagination}
+                filters={filters}
+            />
         </>
     );
 }

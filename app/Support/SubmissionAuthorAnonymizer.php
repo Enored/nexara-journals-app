@@ -3,33 +3,60 @@
 namespace App\Support;
 
 use App\Enums\JournalRole;
+use App\Enums\ReviewModel;
 use App\Models\Submission;
 use App\Models\User;
 
 final class SubmissionAuthorAnonymizer
 {
     /**
-     * Authors must not see reviewer/editor identities; editors, reviewers, and platform admins do.
+     * The review model that governs identity disclosure for a submission,
+     * read from the owning journal (eager-loaded; no extra query) and falling
+     * back to Single-Blind when unset.
      */
-    public static function shouldAnonymize(User $user, Submission $submission): bool
+    public static function reviewModelFor(Submission $submission): ReviewModel
     {
-        if ($submission->author_id !== $user->id) {
-            return false;
-        }
+        $model = $submission->journal?->review_model;
 
-        if ($user->isPlatformAdmin()) {
-            return false;
-        }
-
-        if ($user->hasJournalRole($submission->journal, JournalRole::Editor)
-            || $user->hasJournalRole($submission->journal, JournalRole::Admin)) {
-            return false;
-        }
-
-        return true;
+        return $model instanceof ReviewModel ? $model : ReviewModel::SingleBlind;
     }
 
-    public static function apply(Submission $submission): Submission
+    /**
+     * Apply the identity blinding appropriate to the given viewer and the
+     * submission's journal review model. Mutates and returns the submission.
+     *
+     * Editors of the journal and platform admins always see full identities.
+     */
+    public static function forViewer(User $user, Submission $submission): Submission
+    {
+        if ($user->isPlatformAdmin()
+            || $user->hasJournalRole($submission->journal, JournalRole::Editor)
+            || $user->hasJournalRole($submission->journal, JournalRole::Admin)) {
+            return $submission;
+        }
+
+        $model = self::reviewModelFor($submission);
+
+        if ($submission->author_id === $user->id) {
+            if ($model->hidesReviewersFromAuthor()) {
+                self::applyForAuthor($submission);
+            }
+
+            return $submission;
+        }
+
+        if ($model->hidesAuthorFromReviewer()) {
+            self::applyForReviewer($submission);
+        }
+
+        return $submission;
+    }
+
+    /**
+     * Hide reviewer and editor identities from the author (single- and
+     * double-blind), replacing them with stable anonymous labels.
+     */
+    public static function applyForAuthor(Submission $submission): Submission
     {
         $submission->loadMissing([
             'reviewAssignments',
@@ -88,6 +115,27 @@ final class SubmissionAuthorAnonymizer
                 return $decision;
             })
         );
+
+        return $submission;
+    }
+
+    /**
+     * Hide the author identity from a reviewer (double-blind only) while
+     * keeping the manuscript content the reviewer needs. Also strips
+     * author-identifying files from the loaded files relation so reviewers
+     * never receive the non-anonymized manuscript.
+     */
+    public static function applyForReviewer(Submission $submission): Submission
+    {
+        $submission->unsetRelation('author');
+        $submission->makeHidden(['author_id']);
+
+        if ($submission->relationLoaded('files')) {
+            $submission->setRelation(
+                'files',
+                SubmissionFileAccess::reviewerSafeFiles($submission->files)
+            );
+        }
 
         return $submission;
     }

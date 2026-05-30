@@ -7,7 +7,9 @@ use App\Enums\SubmissionStatus;
 use App\Models\Edition;
 use App\Models\Journal;
 use App\Models\Submission;
+use App\Support\AboutPayload;
 use App\Support\ArticlePayload;
+use App\Support\JournalAnnouncementsPayload;
 use App\Support\PlatformHomePayload;
 use Illuminate\Http\Response;
 use Inertia\Inertia;
@@ -110,19 +112,22 @@ class HomeController extends Controller
         $currentEditionPublishedAt = $currentEdition?->published_at;
 
         $journalPayload = [
-            'name' => $journal->name ?: 'Journal of Computational Cognition',
+            'name' => $journal->name,
             'short' => $journal->abbreviation ?: 'J. Comput. Cognition',
             'founded' => (int) $foundedYear,
             'totalIssues' => $totalIssues,
-            'issn_online' => $journal->issn ?: '2845-1739',
-            'issn_print' => '2845-1720',
-            'doiPrefix' => '10.31472/jcc',
-            'frequency' => 'Quarterly · 4 issues / year',
+            // Hero meta fields — real values or null so the UI hides empty rows.
+            'issn_online' => $journal->e_issn ?: null,
+            'issn_print' => $journal->p_issn ?: null,
+            'doiPrefix' => $journal->doi_prefix ?: null,
+            'frequency' => $journal->frequency ?: null,
+            'license' => $journal->license_type ?: null,
+            'contactEmail' => $journal->contact_email ?: null,
+            'tagline' => $journal->description ?: null,
             'impact' => '6.42',
             'acceptance' => '18%',
             'citeScore' => '9.1',
             'timeToFirstDecision' => '31 days',
-            'tagline' => $journal->description ?: 'A peer-reviewed, fully open-access venue for theoretical, computational, and empirical work at the intersection of cognition, learning systems, and neural computation.',
             'currentVolume' => $currentEdition?->volume?->number ?? $firstArticle['volume'],
             'currentIssue' => $currentEdition?->issue ?? $firstArticle['issue'],
             'currentDate' => $currentEditionPublishedAt?->format('M Y') ?? now()->format('M Y'),
@@ -175,6 +180,7 @@ class HomeController extends Controller
             'articles' => $articlePayload->values(),
             'issues' => $issuesPayload,
             'subjects' => $subjectsPayload,
+            'announcements' => JournalAnnouncementsPayload::forJournal($journal),
         ]);
     }
 }

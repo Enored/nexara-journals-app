@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ImpersonationController;
+use App\Http\Controllers\Admin\AnnouncementManageController;
 use App\Http\Controllers\Admin\BlogManageController;
 use App\Http\Controllers\Admin\PlatformSettingsController;
 use App\Http\Controllers\Admin\JournalEditionManageController;
@@ -28,19 +29,20 @@ use App\Http\Controllers\PublicJournalsController;
 use App\Http\Controllers\JournalSubmissionWebController;
 use App\Http\Controllers\PublicArticleController;
 use App\Http\Controllers\ReviewerTaskController;
+use App\Http\Controllers\SubmissionFileDownloadController;
 use App\Http\Controllers\SubmissionLegacyRedirectController;
 use App\Http\Controllers\SubmissionPublishController;
 use App\Http\Controllers\UserSettingsController;
+use App\Support\AboutPayload;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/journals', [PublicJournalsController::class, 'index'])->name('journals.index');
 Route::get('/articles', [PublicArticlesDirectoryController::class, 'index'])->name('articles.index');
 Route::get('/blogs', [PublicBlogController::class, 'index'])->name('blogs.index');
 Route::get('/blogs/{slug}', [PublicBlogController::class, 'show'])->name('blogs.show');
-Route::get('/about', fn () => \Inertia\Inertia::render('Platform/About', [
-    'pageTitle' => 'About — '.platform_name(),
-]))->name('about');
+Route::get('/about', fn () => Inertia::render('Platform/About', AboutPayload::build()))->name('about');
 Route::get('/articles/{submission}', [PublicArticleController::class, 'show'])->name('journal.articles.show');
 
 
@@ -103,6 +105,9 @@ Route::middleware('auth')->group(function () {
     });
     Route::get('/editor/submissions/{submission}', [EditorSubmissionShowController::class, 'show'])->name('editor.submissions.show');
     Route::post('/editor/submissions/{submission}/assign-reviewer', [EditorSubmissionActionController::class, 'assignReviewer'])->name('editor.submissions.assign-reviewer');
+    Route::post('/editor/submissions/{submission}/send-for-review', [EditorSubmissionActionController::class, 'sendForReview'])->name('editor.submissions.send-for-review');
+    Route::post('/editor/submissions/{submission}/return-to-author', [EditorSubmissionActionController::class, 'returnToAuthor'])->name('editor.submissions.return-to-author');
+    Route::post('/editor/submissions/{submission}/desk-reject', [EditorSubmissionActionController::class, 'deskReject'])->name('editor.submissions.desk-reject');
     Route::post('/editor/submissions/{submission}/decision', [EditorDecisionController::class, 'store'])->name('editor.submissions.decision');
     Route::post('/editor/submissions/{submission}/publish', [SubmissionPublishController::class, 'store'])->name('editor.submissions.publish');
 
@@ -118,6 +123,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/review-tasks/{assignment}', [ReviewerTaskController::class, 'show'])->name('review-tasks.show');
     Route::post('/review-tasks/{assignment}', [ReviewerTaskController::class, 'store'])->name('review-tasks.store');
+
+    Route::get('/submission-files/{file}', [SubmissionFileDownloadController::class, 'show'])->name('submission-files.download');
 
     Route::middleware('platform.admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [RoleDashboardController::class, 'admin'])->name('dashboard');
@@ -143,6 +150,11 @@ Route::middleware('auth')->group(function () {
         Route::get('blogs/{blog}/edit', [BlogManageController::class, 'edit'])->name('blogs.edit');
         Route::put('blogs/{blog}', [BlogManageController::class, 'update'])->name('blogs.update');
         Route::delete('blogs/{blog}', [BlogManageController::class, 'destroy'])->name('blogs.destroy');
+
+        Route::get('announcements', [AnnouncementManageController::class, 'index'])->name('announcements.index');
+        Route::post('announcements', [AnnouncementManageController::class, 'store'])->name('announcements.store');
+        Route::put('announcements/{announcement}', [AnnouncementManageController::class, 'update'])->name('announcements.update');
+        Route::delete('announcements/{announcement}', [AnnouncementManageController::class, 'destroy'])->name('announcements.destroy');
 
         Route::get('settings', [PlatformSettingsController::class, 'edit'])->name('settings.edit');
         Route::put('settings/branding', [PlatformSettingsController::class, 'updateBranding'])->name('settings.branding.update');

@@ -82,9 +82,7 @@ class SubmissionController extends Controller
 
         $submission->load(['journal', 'author', 'files', 'reviewAssignments.reviewer', 'reviewAssignments.editor', 'reviews.reviewer', 'editorialDecisions.recorder']);
 
-        if (SubmissionAuthorAnonymizer::shouldAnonymize($user, $submission)) {
-            SubmissionAuthorAnonymizer::apply($submission);
-        }
+        SubmissionAuthorAnonymizer::forViewer($user, $submission);
 
         return response()->json($submission);
     }
@@ -128,7 +126,7 @@ class SubmissionController extends Controller
         ]);
 
         $file = $request->file('file');
-        $path = $file->store('submissions/'.$submission->id, 'local');
+        $path = $file->store('submissions/'.$submission->id, SubmissionFile::DISK);
 
         $record = SubmissionFile::query()->create([
             'submission_id' => $submission->id,

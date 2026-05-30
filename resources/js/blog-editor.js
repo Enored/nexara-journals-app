@@ -1,9 +1,14 @@
+import { initTagInput } from './tag-input';
+
 export function initBlogEditor() {
     const form = document.querySelector('[data-blog-editor-form]');
 
     if (!form) {
         return;
     }
+
+    initBlogTags(form);
+    initBlogPublishSwitch(form);
 
     const editorHost = form.querySelector('[data-blog-editor]');
     const contentInput = form.querySelector('[data-blog-content-input]');
@@ -65,6 +70,26 @@ export function initBlogEditor() {
             }
         });
     });
+}
+
+function initBlogPublishSwitch(form) {
+    const input = form.querySelector('#blog-is-published');
+    const label = form.querySelector('label[for="blog-is-published"]');
+
+    if (!input || !label) {
+        return;
+    }
+
+    const sync = () => {
+        label.textContent = input.checked ? 'Published' : 'Draft';
+    };
+
+    input.addEventListener('change', sync);
+    sync();
+}
+
+function initBlogTags(form) {
+    initTagInput(form.querySelector('[data-blog-tags]'));
 }
 
 function renderPreview(previewEl, html) {

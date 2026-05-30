@@ -116,6 +116,11 @@ class SubmissionEditorTimeline
 
         $round['events'] = self::eventsForReviewerAssignment($assignment, $roundVersion, $submission);
 
+        if (SubmissionAuthorAnonymizer::reviewModelFor($submission)->hidesAuthorFromReviewer()
+            && isset($round['files'])) {
+            $round['files'] = SubmissionFileAccess::reviewerSafeFiles(collect($round['files']));
+        }
+
         return ['versions' => [$round]];
     }
 

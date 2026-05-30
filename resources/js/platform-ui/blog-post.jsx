@@ -5,7 +5,6 @@ import { SiteHeader } from '../shared/site-header';
 import { Footer } from '../journal-ui/archive-sidebar';
 import { PostCard } from './blog-index';
 import { PostCover } from './post-cover';
-import { authorFor } from './blog-authors';
 
 function ShareButtons({ onShare, className = '' }) {
     return (
@@ -50,7 +49,6 @@ function ShareRail({ onShare }) {
 
 function PostArticle({ post, onShare }) {
     const { platform } = usePage().props;
-    const author = authorFor(post);
     const body = post.content?.length ? post.content : ['Full post coming soon.'];
     const pullquote =
         body.length >= 4
@@ -70,13 +68,23 @@ function PostArticle({ post, onShare }) {
                         <h1>{post.title}</h1>
                         <p className="standfirst">{post.excerpt}</p>
                         <div className="post-byline">
-                            <div className="avatar">{author.initials}</div>
+                            <div className="avatar">{post.authorInitials}</div>
                             <div className="who">
                                 <span className="nm">{post.author}</span>
                                 <span className="meta">
-                                    <span>{post.role}</span>
-                                    <span className="dot">·</span>
+                                    {post.authorAffiliation && (
+                                        <>
+                                            <span>{post.authorAffiliation}</span>
+                                            <span className="dot">·</span>
+                                        </>
+                                    )}
                                     <span>{post.date}</span>
+                                    {post.updated && (
+                                        <>
+                                            <span className="dot">·</span>
+                                            <span>Updated {post.updated}</span>
+                                        </>
+                                    )}
                                     <span className="dot">·</span>
                                     <span>{post.readTime} min read</span>
                                 </span>
@@ -90,12 +98,14 @@ function PostArticle({ post, onShare }) {
             <section className="post-hero">
                 <div className="container-wide">
                     <div className="hero-frame">
-                        <PostCover />
+                        <PostCover src={post.cover} alt={post.coverCaption || post.title} />
                     </div>
-                    <div className="cap">
-                        <span className="src">Cover</span>
-                        <span>Figure drawn from work discussed in this post.</span>
-                    </div>
+                    {post.coverCaption && (
+                        <div className="cap">
+                            <span className="src">Cover</span>
+                            <span>{post.coverCaption}</span>
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -126,12 +136,14 @@ function PostArticle({ post, onShare }) {
                     </div>
 
                     <div className="author-card">
-                        <div className="av">{author.initials}</div>
+                        <div className="av">{post.authorInitials}</div>
                         <div>
                             <div className="ac-label">Written by</div>
                             <h3 className="ac-name">{post.author}</h3>
-                            <div className="ac-role">{post.role}</div>
-                            {author.bio && <p className="ac-bio">{author.bio}</p>}
+                            {post.authorAffiliation && (
+                                <div className="ac-role">{post.authorAffiliation}</div>
+                            )}
+                            {post.authorBio && <p className="ac-bio">{post.authorBio}</p>}
                         </div>
                     </div>
                 </div>
@@ -140,12 +152,12 @@ function PostArticle({ post, onShare }) {
     );
 }
 
-function RelatedPosts({ current, posts }) {
+function RelatedPosts({ related }) {
     const { platform } = usePage().props;
-    const sorted = [...posts].sort((a, b) => new Date(b.published) - new Date(a.published));
-    const sameCat = sorted.filter((p) => p.id !== current.id && p.category === current.category);
-    const others = sorted.filter((p) => p.id !== current.id && p.category !== current.category);
-    const related = [...sameCat, ...others].slice(0, 3);
+
+    if (!related || related.length === 0) {
+        return null;
+    }
 
     const openPost = (p) => {
         if (p.url) {
@@ -186,14 +198,14 @@ function PostMissing() {
     );
 }
 
-export default function BlogPostPage({ post, posts, onShare }) {
+export default function BlogPostPage({ post, related, onShare }) {
     return (
         <div className="app">
             <SiteHeader view="blogs" />
             {post ? (
                 <>
                     <PostArticle post={post} onShare={onShare} />
-                    <RelatedPosts current={post} posts={posts} />
+                    <RelatedPosts related={related} />
                 </>
             ) : (
                 <PostMissing />

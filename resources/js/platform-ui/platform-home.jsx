@@ -133,7 +133,10 @@ export function JournalShelf({ journals }) {
                             className={`jcard plain ${i % 5 === 3 ? 'light' : ''}`}
                             style={{ textDecoration: 'none', color: 'inherit' }}
                         >
-                            <div className="jcover">
+                            <div className={`jcover ${j.cover ? 'has-cover' : ''}`}>
+                                {j.cover && (
+                                    <img className="jcover-img" src={j.cover} alt="" loading="lazy" aria-hidden />
+                                )}
                                 <div className="jbottom">
                                     <div className="jname jname-x">{j.name}</div>
                                     <div className="jfield">{j.field}</div>

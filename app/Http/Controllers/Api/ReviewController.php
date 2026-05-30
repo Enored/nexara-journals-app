@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\ReviewAssignmentStatus;
 use App\Http\Controllers\Controller;
+use App\Enums\ReviewRecommendation;
 use App\Models\Review;
 use App\Models\ReviewAssignment;
 use App\Models\WorkflowNotification;
+use App\Support\SubmissionAuthorAnonymizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,7 +29,13 @@ class ReviewController extends Controller
     {
         $this->authorizeAssignment($request->user()->id, $assignment);
 
-        return response()->json($assignment->load(['submission.journal', 'review']));
+        $assignment->load(['submission.journal', 'review']);
+
+        if ($assignment->submission) {
+            SubmissionAuthorAnonymizer::forViewer($request->user(), $assignment->submission);
+        }
+
+        return response()->json($assignment);
     }
 
     public function accept(Request $request, ReviewAssignment $assignment): JsonResponse

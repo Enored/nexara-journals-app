@@ -7,7 +7,7 @@ import '../../../css/blog.css';
 import '../../../css/blog-post.css';
 import '../../journal-ui/styles.css';
 
-export default function PlatformBlogShow({ pageTitle, post, posts }) {
+export default function PlatformBlogShow({ pageTitle, post, related }) {
     const description = post?.excerpt ?? 'Editorials and working notes from Nexara Research Press.';
 
     return (
@@ -16,7 +16,7 @@ export default function PlatformBlogShow({ pageTitle, post, posts }) {
                 <title>{pageTitle}</title>
                 <meta name="description" content={description} />
             </Head>
-            <BlogPostApp post={post} posts={posts} />
+            <BlogPostApp post={post} related={related} />
         </>
     );
 }

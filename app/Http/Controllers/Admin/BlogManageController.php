@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ReturnsDashListPartial;
 use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Support\AdminBlogIndexFilters;
+use App\Support\BlogPayload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -36,7 +37,7 @@ class BlogManageController extends Controller
 
     public function create(): View
     {
-        return view('admin.blogs.create');
+        return view('admin.blogs.create', ['categories' => $this->categoryOptions()]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -52,7 +53,10 @@ class BlogManageController extends Controller
 
     public function edit(Blog $blog): View
     {
-        return view('admin.blogs.edit', compact('blog'));
+        return view('admin.blogs.edit', [
+            'blog' => $blog,
+            'categories' => $this->categoryOptions(),
+        ]);
     }
 
     public function update(Request $request, Blog $blog): RedirectResponse
@@ -80,7 +84,7 @@ class BlogManageController extends Controller
     }
 
     /**
-     * @return array{title: string, slug: string, excerpt: string|null, content: string|null, is_published: bool}
+     * @return array<string, mixed>
      */
     private function validated(Request $request, ?Blog $blog = null): array
     {
@@ -93,8 +97,12 @@ class BlogManageController extends Controller
                 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
                 Rule::unique('blogs', 'slug')->ignore($blog?->id),
             ],
+            'category' => ['nullable', 'string', Rule::in($this->categoryOptions())],
+            'cover_image' => ['nullable', 'url', 'max:2048'],
+            'cover_caption' => ['nullable', 'string', 'max:255'],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'string'],
+            'tags' => ['nullable', 'string'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
@@ -102,7 +110,53 @@ class BlogManageController extends Controller
         $data['slug'] = filled($data['slug'] ?? null)
             ? Str::slug($data['slug'])
             : Str::slug($data['title']);
+        $data['tags'] = $this->normalizeTags($data['tags'] ?? null);
+        $data['read_time'] = BlogPayload::readTimeFor($data['content'] ?? null);
 
         return $data;
+    }
+
+    /**
+     * Tagify submits its value as a JSON string of objects (e.g. [{"value":"policy"}]).
+     * Accept that, a plain JSON array, or a comma-separated fallback.
+     *
+     * @return list<string>
+     */
+    private function normalizeTags(?string $raw): array
+    {
+        $raw = trim((string) $raw);
+        if ($raw === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $values = array_map(
+                fn ($tag) => is_array($tag) ? ($tag['value'] ?? '') : (string) $tag,
+                $decoded,
+            );
+        } else {
+            $values = explode(',', $raw);
+        }
+
+        return collect($values)
+            ->map(fn ($tag) => trim((string) $tag))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Selectable categories (everything except the "All" filter pseudo-category).
+     *
+     * @return list<string>
+     */
+    private function categoryOptions(): array
+    {
+        return array_values(array_filter(
+            BlogPayload::CATEGORIES,
+            fn (string $category) => $category !== 'All',
+        ));
     }
 }

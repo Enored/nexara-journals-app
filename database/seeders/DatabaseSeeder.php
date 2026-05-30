@@ -52,7 +52,7 @@ class DatabaseSeeder extends Seeder
         $journal = Journal::query()->create([
             'name' => 'Journal of Demo Research',
             'subdomain' => 'demo',
-            'issn' => '1234-5678',
+            'p_issn' => '1234-5678',
             'description' => 'A demonstration journal for local development.',
             'primary_color' => '#0f766e',
             'submission_guidelines' => "Prepare your manuscript as PDF or DOCX.\nMaximum abstract length 300 words.",
@@ -92,5 +92,7 @@ class DatabaseSeeder extends Seeder
             'invited_at' => now()->subDay(),
             'responded_at' => now()->subDay(),
         ]);
+
+        $this->call(BlogSeeder::class);
     }
 }

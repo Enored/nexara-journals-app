@@ -43,7 +43,7 @@
                             <x-dash.select label="Journal" name="journal_id" required>
                                 <option value="" disabled @selected(! old('journal_id') && ! request('journal'))>Select a journal…</option>
                                 @foreach ($submitJournals as $journal)
-                                    <option value="{{ $journal->id }}" @selected(old('journal_id') === $journal->id || (! old('journal_id') && request('journal') === $journal->id))>
+                                    <option value="{{ $journal->id }}" data-review-model="{{ $journal->review_model->value }}" @selected(old('journal_id') === $journal->id || (! old('journal_id') && request('journal') === $journal->id))>
                                         {{ $journal->name }}
                                     </option>
                                 @endforeach
@@ -55,13 +55,23 @@
                                 required
                             />
                             <x-dash.textarea label="Abstract" name="abstract" rows="5" required>{{ old('abstract') }}</x-dash.textarea>
-                            <x-dash.input
-                                label="Keywords"
-                                name="keywords"
-                                :value="old('keywords')"
-                                required
-                            />
-                            <p class="form-text text-muted mt-n3 mb-3">Separate keywords with commas.</p>
+                            <div class="mb-3">
+                                <label class="form-label" for="manuscript-keywords">Keywords</label>
+                                <input
+                                    type="text"
+                                    name="keywords"
+                                    id="manuscript-keywords"
+                                    class="form-control{{ $errors->has('keywords') ? ' is-invalid' : '' }}"
+                                    data-tag-input
+                                    value="{{ old('keywords') }}"
+                                    placeholder="Type a keyword and press Enter"
+                                    required
+                                >
+                                <div class="form-text">Press Enter or comma to add each keyword.</div>
+                                @error('keywords')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
                             <x-dash.select label="Article type" name="article_type" required>
                                 <option value="" disabled @selected(! old('article_type'))>Select type…</option>
                                 @foreach ($articleTypes as $type)
@@ -83,6 +93,20 @@
                                 @enderror
                                 <p class="form-text text-muted mb-0">PDF or Word (.doc, .docx), max 20 MB. Stored securely on the server for now.</p>
                             </div>
+                            <div class="mt-3 d-none" id="blinded-manuscript-group">
+                                <label for="blinded-manuscript-file" class="form-label">Anonymized manuscript <span class="text-danger">*</span></label>
+                                <input
+                                    type="file"
+                                    name="blinded_manuscript"
+                                    id="blinded-manuscript-file"
+                                    class="form-control @error('blinded_manuscript') is-invalid @enderror"
+                                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                >
+                                @error('blinded_manuscript')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                                <p class="form-text text-muted mb-0">This journal uses <strong>double-blind</strong> review. Upload a copy with author names, affiliations, and identifying acknowledgements removed. Reviewers only ever see this version.</p>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
@@ -98,7 +122,24 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const shouldOpen = {{ ($errors->hasAny(['journal_id', 'title', 'abstract', 'keywords', 'article_type', 'manuscript']) || request('create')) ? 'true' : 'false' }};
+            const journalSelect = document.querySelector('#manuscript-create-form select[name="journal_id"]');
+            const blindedGroup = document.getElementById('blinded-manuscript-group');
+            const blindedInput = document.getElementById('blinded-manuscript-file');
+
+            const syncBlinded = () => {
+                if (! journalSelect || ! blindedGroup || ! blindedInput) {
+                    return;
+                }
+                const opt = journalSelect.options[journalSelect.selectedIndex];
+                const doubleBlind = opt?.dataset.reviewModel === 'double_blind';
+                blindedGroup.classList.toggle('d-none', ! doubleBlind);
+                blindedInput.required = doubleBlind;
+            };
+
+            journalSelect?.addEventListener('change', syncBlinded);
+            syncBlinded();
+
+            const shouldOpen = {{ ($errors->hasAny(['journal_id', 'title', 'abstract', 'keywords', 'article_type', 'manuscript', 'blinded_manuscript']) || request('create')) ? 'true' : 'false' }};
             if (shouldOpen) {
                 const modalEl = document.getElementById('manuscript-create-modal');
                 if (modalEl && window.bootstrap?.Modal) {

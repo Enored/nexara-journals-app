@@ -8,8 +8,8 @@
             @foreach ($submission->files as $file)
                 <li class="py-2">
                     <span class="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">v{{ $file->version }}</span>
-                    <span class="font-medium text-slate-900">{{ $file->original_name }}</span>
-                    <span class="block text-xs text-slate-500">{{ $file->file_type->value }} · {{ number_format($file->file_size / 1024, 1) }} KB · {{ $file->created_at->format('M j, Y g:i A') }}</span>
+                    <a href="{{ platform_route('submission-files.download', $file) }}" class="font-medium text-teal-700 hover:underline">{{ $file->original_name }}</a>
+                    <span class="block text-xs text-slate-500">{{ str_replace('_', ' ', $file->file_type->value) }} · {{ number_format($file->file_size / 1024, 1) }} KB · {{ $file->created_at->format('M j, Y g:i A') }}</span>
                 </li>
             @endforeach
         </ul>

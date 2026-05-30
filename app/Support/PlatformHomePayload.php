@@ -28,7 +28,7 @@ class PlatformHomePayload
         ];
 
         $journalsPayload = $journals->values()->map(
-            fn (Journal $journal, int $index) => JournalsDirectoryPayload::mapJournal($journal, $index),
+            fn (Journal $journal) => JournalsDirectoryPayload::mapJournal($journal),
         );
 
         $latestPayload = $latestArticles->map(function (Submission $article) {
@@ -77,8 +77,7 @@ class PlatformHomePayload
             'journals' => $journalsPayload,
             'featured' => $featured,
             'latest' => $latestPayload,
-            'posts' => BlogPayload::forPublic(),
-            'postCategories' => BlogPayload::CATEGORIES,
+            'posts' => BlogPayload::recent(3),
         ];
     }
 

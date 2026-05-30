@@ -1,14 +1,12 @@
-import React, { useMemo, useState } from 'react';
-import { Check, Search, X } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Check, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 import { SiteHeader } from '../shared/site-header';
 import { Footer } from '../journal-ui/archive-sidebar';
 
-const ART_SORTS = {
-    newest: { label: 'Newest first', fn: (a, b) => new Date(b.date) - new Date(a.date) },
-    oldest: { label: 'Oldest first', fn: (a, b) => new Date(a.date) - new Date(b.date) },
-    cited: { label: 'Most cited', fn: (a, b) => b.citations - a.citations },
-    read: { label: 'Most read', fn: (a, b) => b.downloads - a.downloads },
-    discussed: { label: 'Most discussed', fn: (a, b) => b.altmetric - a.altmetric },
+const SORT_LABELS = {
+    newest: 'Newest first',
+    oldest: 'Oldest first',
 };
 
 function FacetOpt({ label, count, on, onToggle }) {
@@ -23,13 +21,6 @@ function FacetOpt({ label, count, on, onToggle }) {
     );
 }
 
-function formatDownloads(n) {
-    if (n >= 1000) {
-        return `${(n / 1000).toFixed(1)}k`;
-    }
-    return String(n);
-}
-
 function PaperRow({ paper }) {
     const dateLabel = new Date(paper.date).toLocaleDateString('en-GB', {
         day: 'numeric',
@@ -39,43 +30,20 @@ function PaperRow({ paper }) {
 
     const content = (
         <>
-            <div>
-                <div className="pr-tags">
-                    <span className="pr-jrnl">{paper.journal}</span>
-                    {paper.oa && <span className="tag oa">Open access</span>}
-                    <span className="tag type">{paper.type}</span>
-                    <span className="tag subject">{paper.subject}</span>
-                </div>
-                <h3>{paper.title}</h3>
-                <div className="pr-authors">{paper.authors}</div>
-                <p className="pr-abstract">{paper.abstract}</p>
-                <div className="pr-ref">
-                    <span>
-                        Vol. {paper.vol}, Iss. {paper.iss}
-                    </span>
-                    <span className="sep">·</span>
-                    <span>{dateLabel}</span>
-                    {paper.keywords?.length > 0 && (
-                        <>
-                            <span className="sep">·</span>
-                            <span>{paper.keywords.slice(0, 3).join(' · ')}</span>
-                        </>
-                    )}
-                </div>
+            <div className="pr-tags">
+                <span className="pr-jrnl">{paper.journal}</span>
+                {paper.oa && <span className="tag oa">Open access</span>}
+                <span className="tag type">{paper.type}</span>
             </div>
-            <div className="pr-metrics">
-                <div className="m alt">
-                    <div className="v">{paper.altmetric}</div>
-                    <div className="l">Altmetric</div>
-                </div>
-                <div className="m">
-                    <div className="v">{paper.citations}</div>
-                    <div className="l">Citations</div>
-                </div>
-                <div className="m">
-                    <div className="v">{formatDownloads(paper.downloads)}</div>
-                    <div className="l">Downloads</div>
-                </div>
+            <h3>{paper.title}</h3>
+            <div className="pr-authors">{paper.authors}</div>
+            <p className="pr-abstract">{paper.abstract}</p>
+            <div className="pr-ref">
+                <span>
+                    Vol. {paper.vol}, Iss. {paper.iss}
+                </span>
+                <span className="sep">·</span>
+                <span>{dateLabel}</span>
             </div>
         </>
     );
@@ -95,172 +63,268 @@ function PaperRow({ paper }) {
     );
 }
 
-function ArtMasthead({ press, paperCount }) {
+function ArtMasthead({ press }) {
+    const articleWord = press.articles === '1' ? 'Article' : 'Articles';
+
     return (
         <section className="art-masthead">
             <div className="container-wide">
                 <div className="eyebrow">
-                    {press.name} · {paperCount} of {press.articles} articles · all open access
+                    {press.name} · {press.articles} {articleWord} · all open access
                 </div>
                 <h1>Articles</h1>
                 <p className="blurb">
-                    Search and filter peer-reviewed research across all {press.journals} Nexara
-                    journals — every paper free to read, download, and reuse.
+                    Search and filter peer-reviewed research across all {press.journals} {press.name}
+                    {' '}journals — every paper free to read, download, and reuse.
                 </p>
             </div>
         </section>
     );
 }
 
-export default function ArticlesDirectory({ press, papers, paperTypes }) {
-    const [query, setQuery] = useState('');
-    const [types, setTypes] = useState([]);
-    const [disciplines, setDisciplines] = useState([]);
-    const [years, setYears] = useState([]);
-    const [oaOnly, setOaOnly] = useState(false);
-    const [sort, setSort] = useState('newest');
+/** Compact, windowed page list with ellipses, e.g. 1 … 4 5 [6] 7 8 … 20. */
+function pageWindow(current, last) {
+    if (last <= 7) {
+        return Array.from({ length: last }, (_, i) => i + 1);
+    }
 
-    const typeOpts = useMemo(
-        () => paperTypes.map((t) => [t, papers.filter((p) => p.type === t).length]).filter(([, n]) => n > 0),
-        [papers, paperTypes],
-    );
+    const pages = new Set([1, last, current, current - 1, current + 1]);
+    const sorted = [...pages].filter((p) => p >= 1 && p <= last).sort((a, b) => a - b);
 
-    const discOpts = useMemo(() => {
-        const counts = {};
-        papers.forEach((p) => {
-            counts[p.discipline] = (counts[p.discipline] || 0) + 1;
-        });
-        return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-    }, [papers]);
-
-    const yearOpts = useMemo(() => {
-        const counts = {};
-        papers.forEach((p) => {
-            counts[p.year] = (counts[p.year] || 0) + 1;
-        });
-        return Object.entries(counts).sort((a, b) => Number(b[0]) - Number(a[0]));
-    }, [papers]);
-
-    const toggle = (setter, arr, val) => {
-        setter(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
-    };
-
-    const q = query.trim().toLowerCase();
-    const filtered = useMemo(() => {
-        const list = papers.filter((p) => {
-            if (types.length && !types.includes(p.type)) {
-                return false;
-            }
-            if (disciplines.length && !disciplines.includes(p.discipline)) {
-                return false;
-            }
-            if (years.length && !years.includes(String(p.year))) {
-                return false;
-            }
-            if (oaOnly && !p.oa) {
-                return false;
-            }
-            if (
-                q &&
-                !(
-                    p.title.toLowerCase().includes(q) ||
-                    p.authors.toLowerCase().includes(q) ||
-                    p.abstract.toLowerCase().includes(q) ||
-                    p.journal.toLowerCase().includes(q) ||
-                    p.subject.toLowerCase().includes(q) ||
-                    (p.keywords || []).some((k) => k.toLowerCase().includes(q))
-                )
-            ) {
-                return false;
-            }
-            return true;
-        });
-        return [...list].sort(ART_SORTS[sort].fn);
-    }, [papers, types, disciplines, years, oaOnly, q, sort]);
-
-    const activeFilters = [
-        ...types.map((t) => ({ kind: 'type', val: t, label: t })),
-        ...disciplines.map((d) => ({ kind: 'disc', val: d, label: d })),
-        ...years.map((y) => ({ kind: 'year', val: y, label: y })),
-        ...(oaOnly ? [{ kind: 'oa', val: true, label: 'Open access' }] : []),
-    ];
-    const anyFilter = activeFilters.length > 0 || query;
-
-    const removeChip = (c) => {
-        if (c.kind === 'type') {
-            toggle(setTypes, types, c.val);
-        } else if (c.kind === 'disc') {
-            toggle(setDisciplines, disciplines, c.val);
-        } else if (c.kind === 'year') {
-            toggle(setYears, years, c.val);
-        } else if (c.kind === 'oa') {
-            setOaOnly(false);
+    const out = [];
+    let prev = 0;
+    for (const p of sorted) {
+        if (p - prev > 1) {
+            out.push('…');
         }
+        out.push(p);
+        prev = p;
+    }
+    return out;
+}
+
+function Pagination({ page, lastPage, hrefFor }) {
+    if (lastPage <= 1) {
+        return null;
+    }
+
+    const items = pageWindow(page, lastPage);
+
+    return (
+        <nav className="art-pagination" aria-label="Article pages">
+            {page > 1 ? (
+                <Link
+                    href={hrefFor(page - 1)}
+                    rel="prev"
+                    className="pg-arrow"
+                    only={['papers', 'pagination', 'filters']}
+                    preserveState
+                    aria-label="Previous page"
+                >
+                    <ChevronLeft size={16} strokeWidth={1.5} aria-hidden />
+                </Link>
+            ) : (
+                <span className="pg-arrow disabled" aria-hidden>
+                    <ChevronLeft size={16} strokeWidth={1.5} />
+                </span>
+            )}
+
+            {items.map((item, i) =>
+                item === '…' ? (
+                    // eslint-disable-next-line react/no-array-index-key
+                    <span key={`gap-${i}`} className="pg-gap">
+                        …
+                    </span>
+                ) : item === page ? (
+                    <span key={item} className="pg-num active" aria-current="page">
+                        {item}
+                    </span>
+                ) : (
+                    <Link
+                        key={item}
+                        href={hrefFor(item)}
+                        className="pg-num"
+                        only={['papers', 'pagination', 'filters']}
+                        preserveState
+                    >
+                        {item}
+                    </Link>
+                ),
+            )}
+
+            {page < lastPage ? (
+                <Link
+                    href={hrefFor(page + 1)}
+                    rel="next"
+                    className="pg-arrow"
+                    only={['papers', 'pagination', 'filters']}
+                    preserveState
+                    aria-label="Next page"
+                >
+                    <ChevronRight size={16} strokeWidth={1.5} aria-hidden />
+                </Link>
+            ) : (
+                <span className="pg-arrow disabled" aria-hidden>
+                    <ChevronRight size={16} strokeWidth={1.5} />
+                </span>
+            )}
+        </nav>
+    );
+}
+
+export default function ArticlesDirectory({ press, papers, pagination, filters, facets }) {
+    const { platform } = usePage().props;
+    const articlesUrl = platform.urls.articles;
+
+    const typeFacets = facets?.types ?? [];
+    const yearFacets = facets?.years ?? [];
+
+    const [query, setQuery] = useState(filters.q ?? '');
+    const didMount = useRef(false);
+
+    // Server is the source of truth for active filters; build params from it.
+    const buildParams = (next, page) => {
+        const params = {};
+        if (next.q) {
+            params.q = next.q;
+        }
+        if (next.types.length) {
+            params.types = next.types;
+        }
+        if (next.years.length) {
+            params.years = next.years;
+        }
+        if (next.sort && next.sort !== 'newest') {
+            params.sort = next.sort;
+        }
+        if (page > 1) {
+            params.page = page;
+        }
+        return params;
     };
+
+    const navigate = (next, page = 1, { preserveScroll = false } = {}) => {
+        router.get(articlesUrl, buildParams(next, page), {
+            only: ['papers', 'pagination', 'filters'],
+            preserveState: true,
+            preserveScroll,
+            replace: true,
+        });
+    };
+
+    // Keep the search box in sync when filters change elsewhere (chip removal, reset).
+    useEffect(() => {
+        setQuery(filters.q ?? '');
+    }, [filters.q]);
+
+    // Debounced search → page 1, without scrolling the user away while typing.
+    useEffect(() => {
+        if (!didMount.current) {
+            didMount.current = true;
+            return;
+        }
+        const handle = setTimeout(() => {
+            const trimmed = query.trim();
+            if (trimmed !== (filters.q ?? '')) {
+                navigate({ ...filters, q: trimmed }, 1, { preserveScroll: true });
+            }
+        }, 350);
+        return () => clearTimeout(handle);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [query]);
+
+    const toggleType = (value) => {
+        const types = filters.types.includes(value)
+            ? filters.types.filter((t) => t !== value)
+            : [...filters.types, value];
+        navigate({ ...filters, types }, 1);
+    };
+
+    const toggleYear = (value) => {
+        const years = filters.years.includes(value)
+            ? filters.years.filter((y) => y !== value)
+            : [...filters.years, value];
+        navigate({ ...filters, years }, 1);
+    };
+
+    const changeSort = (sort) => navigate({ ...filters, sort }, 1);
 
     const resetAll = () => {
         setQuery('');
-        setTypes([]);
-        setDisciplines([]);
-        setYears([]);
-        setOaOnly(false);
+        navigate({ q: '', types: [], years: [], sort: 'newest' }, 1);
     };
+
+    const typeLabel = useMemo(() => {
+        const map = {};
+        typeFacets.forEach((t) => {
+            map[t.value] = t.label;
+        });
+        return map;
+    }, [typeFacets]);
+
+    // Active filter chips — search & sort included alongside the facets.
+    const chips = [
+        ...(filters.q ? [{ key: 'q', label: `“${filters.q}”`, onRemove: () => navigate({ ...filters, q: '' }, 1) }] : []),
+        ...(filters.sort !== 'newest'
+            ? [{ key: 'sort', label: `Sort: ${SORT_LABELS[filters.sort] ?? filters.sort}`, onRemove: () => changeSort('newest') }]
+            : []),
+        ...filters.types.map((t) => ({ key: `type-${t}`, label: typeLabel[t] ?? t, onRemove: () => toggleType(t) })),
+        ...filters.years.map((y) => ({ key: `year-${y}`, label: String(y), onRemove: () => toggleYear(y) })),
+    ];
+
+    const hrefFor = (page) => {
+        const params = buildParams(filters, page);
+        const sp = new URLSearchParams();
+        Object.entries(params).forEach(([k, v]) => {
+            if (Array.isArray(v)) {
+                v.forEach((item) => sp.append(`${k}[]`, item));
+            } else {
+                sp.append(k, v);
+            }
+        });
+        const qs = sp.toString();
+        return qs ? `${articlesUrl}?${qs}` : articlesUrl;
+    };
+
+    const total = pagination.total;
 
     return (
         <div className="app">
             <SiteHeader view="articles" />
-            <ArtMasthead press={press} paperCount={papers.length} />
+            <ArtMasthead press={press} />
 
             <div className="container-wide">
                 <div className="art-layout">
                     <aside className="art-sidebar">
-                        <div className="facet">
-                            <div className="ft">Article type</div>
-                            {typeOpts.map(([t, n]) => (
-                                <FacetOpt
-                                    key={t}
-                                    label={t}
-                                    count={n}
-                                    on={types.includes(t)}
-                                    onToggle={() => toggle(setTypes, types, t)}
-                                />
-                            ))}
-                        </div>
-                        <div className="facet">
-                            <div className="ft">Discipline</div>
-                            {discOpts.map(([d, n]) => (
-                                <FacetOpt
-                                    key={d}
-                                    label={d}
-                                    count={n}
-                                    on={disciplines.includes(d)}
-                                    onToggle={() => toggle(setDisciplines, disciplines, d)}
-                                />
-                            ))}
-                        </div>
-                        <div className="facet">
-                            <div className="ft">Year</div>
-                            {yearOpts.map(([y, n]) => (
-                                <FacetOpt
-                                    key={y}
-                                    label={y}
-                                    count={n}
-                                    on={years.includes(y)}
-                                    onToggle={() => toggle(setYears, years, y)}
-                                />
-                            ))}
-                        </div>
-                        <div className="facet oa-row">
-                            <div className="ft">Access</div>
-                            <label
-                                className={`oa-toggle ${oaOnly ? 'on' : ''}`}
-                                onClick={() => setOaOnly(!oaOnly)}
-                            >
-                                <span className="sw" />
-                                Open access only
-                            </label>
-                        </div>
-                        {anyFilter && (
+                        {typeFacets.length > 0 && (
+                            <div className="facet">
+                                <div className="ft">Article type</div>
+                                {typeFacets.map((t) => (
+                                    <FacetOpt
+                                        key={t.value}
+                                        label={t.label}
+                                        count={t.count}
+                                        on={filters.types.includes(t.value)}
+                                        onToggle={() => toggleType(t.value)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        {yearFacets.length > 0 && (
+                            <div className="facet">
+                                <div className="ft">Year</div>
+                                {yearFacets.map((y) => (
+                                    <FacetOpt
+                                        key={y.value}
+                                        label={String(y.value)}
+                                        count={y.count}
+                                        on={filters.years.includes(y.value)}
+                                        onToggle={() => toggleYear(y.value)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        {chips.length > 0 && (
                             <button type="button" className="facet-reset" onClick={resetAll}>
                                 ← Reset all filters
                             </button>
@@ -295,10 +359,10 @@ export default function ArticlesDirectory({ press, papers, paperTypes }) {
                                 <label htmlFor="article-sort">Sort</label>
                                 <select
                                     id="article-sort"
-                                    value={sort}
-                                    onChange={(e) => setSort(e.target.value)}
+                                    value={filters.sort}
+                                    onChange={(e) => changeSort(e.target.value)}
                                 >
-                                    {Object.entries(ART_SORTS).map(([key, { label }]) => (
+                                    {Object.entries(SORT_LABELS).map(([key, label]) => (
                                         <option key={key} value={key}>
                                             {label}
                                         </option>
@@ -307,16 +371,11 @@ export default function ArticlesDirectory({ press, papers, paperTypes }) {
                             </div>
                         </div>
 
-                        {activeFilters.length > 0 && (
+                        {chips.length > 0 && (
                             <div className="active-chips">
                                 <span className="lbl">Filters</span>
-                                {activeFilters.map((c) => (
-                                    <button
-                                        key={c.kind + c.val}
-                                        type="button"
-                                        className="chip"
-                                        onClick={() => removeChip(c)}
-                                    >
+                                {chips.map((c) => (
+                                    <button key={c.key} type="button" className="chip" onClick={c.onRemove}>
                                         {c.label}{' '}
                                         <span className="xx">
                                             <X size={11} strokeWidth={1.5} aria-hidden />
@@ -327,29 +386,38 @@ export default function ArticlesDirectory({ press, papers, paperTypes }) {
                         )}
 
                         <div className="res-count">
-                            <b>{filtered.length}</b> {filtered.length === 1 ? 'article' : 'articles'}
-                            {query && (
+                            <b>{total}</b> {total === 1 ? 'article' : 'articles'}
+                            {filters.q && (
                                 <span>
                                     {' '}
-                                    matching &ldquo;{query.trim()}&rdquo;
+                                    matching &ldquo;{filters.q}&rdquo;
                                 </span>
                             )}
                         </div>
 
-                        {filtered.length === 0 ? (
+                        {papers.length === 0 ? (
                             <div className="art-empty">
                                 <div className="big">No articles found</div>
                                 <p>Try broadening your search or removing a filter.</p>
-                                <button type="button" className="btn ghost" onClick={resetAll}>
-                                    Reset all filters
-                                </button>
+                                {chips.length > 0 && (
+                                    <button type="button" className="btn ghost" onClick={resetAll}>
+                                        Reset all filters
+                                    </button>
+                                )}
                             </div>
                         ) : (
-                            <div className="paper-list">
-                                {filtered.map((paper) => (
-                                    <PaperRow key={paper.id} paper={paper} />
-                                ))}
-                            </div>
+                            <>
+                                <div className="paper-list">
+                                    {papers.map((paper) => (
+                                        <PaperRow key={paper.id} paper={paper} />
+                                    ))}
+                                </div>
+                                <Pagination
+                                    page={pagination.page}
+                                    lastPage={pagination.lastPage}
+                                    hrefFor={hrefFor}
+                                />
+                            </>
                         )}
                     </main>
                 </div>

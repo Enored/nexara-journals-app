@@ -6,7 +6,7 @@ import '../../../css/platform-home.css';
 import '../../../css/blog.css';
 import '../../journal-ui/styles.css';
 
-export default function PlatformBlogs({ pageTitle, posts, categories }) {
+export default function PlatformBlogs({ pageTitle, posts, pagination, filters, categories, counts }) {
     return (
         <>
             <Head>
@@ -16,7 +16,13 @@ export default function PlatformBlogs({ pageTitle, posts, categories }) {
                     content="Editorials, explainers, and working notes from Nexara Research Press."
                 />
             </Head>
-            <BlogApp posts={posts} categories={categories} />
+            <BlogApp
+                posts={posts}
+                pagination={pagination}
+                filters={filters}
+                categories={categories}
+                counts={counts}
+            />
         </>
     );
 }

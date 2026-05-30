@@ -15,8 +15,12 @@ export const JournalMasthead = ({ onSubmit }) => {
               <span>Journal</span>
               <span className="sep">/</span>
               <span>Established {j.founded}</span>
-              <span className="sep">/</span>
-              <span>{j.frequency.split(' · ')[0]}</span>
+              {j.frequency && (
+                <>
+                  <span className="sep">/</span>
+                  <span>{j.frequency.split(' · ')[0]}</span>
+                </>
+              )}
               <span className="sep">/</span>
               <span style={{ color: 'var(--oa)' }}>● Diamond open access</span>
             </div>
@@ -25,19 +29,15 @@ export const JournalMasthead = ({ onSubmit }) => {
               {j.name}
             </h1>
 
-            <p className="journal-tagline">{j.tagline}</p>
+            {j.tagline && <p className="journal-tagline">{j.tagline}</p>}
 
             <dl className="meta-table">
-              <div className="row"><dt>Editor-in-Chief</dt><dd><strong>Dr. {j.editorChief.name}</strong>, {j.editorChief.aff}</dd></div>
-              <div className="row"><dt>ISSN (online)</dt><dd className="mono">{j.issn_online}</dd></div>
-              <div className="row"><dt>ISSN (print)</dt><dd className="mono">{j.issn_print}</dd></div>
-              <div className="row"><dt>DOI prefix</dt><dd className="mono">{j.doiPrefix}</dd></div>
-              <div className="row"><dt>Frequency</dt><dd>{j.frequency}</dd></div>
-              <div className="row"><dt>Impact factor (2025)</dt><dd><strong>{j.impact}</strong> &nbsp;<span style={{ color: 'var(--muted)', fontSize: '13px' }}>↑ from 5.91 (2024)</span></dd></div>
-              <div className="row"><dt>CiteScore</dt><dd><strong>{j.citeScore}</strong></dd></div>
-              <div className="row"><dt>Acceptance rate</dt><dd>{j.acceptance}</dd></div>
-              <div className="row"><dt>Time to first decision</dt><dd>{j.timeToFirstDecision} (median)</dd></div>
-              <div className="row"><dt>Licence</dt><dd>CC BY 4.0 · No author processing charge</dd></div>
+              {j.issn_online && <div className="row"><dt>ISSN (online)</dt><dd className="mono">{j.issn_online}</dd></div>}
+              {j.issn_print && <div className="row"><dt>ISSN (print)</dt><dd className="mono">{j.issn_print}</dd></div>}
+              {j.doiPrefix && <div className="row"><dt>DOI prefix</dt><dd className="mono">{j.doiPrefix}</dd></div>}
+              {j.frequency && <div className="row"><dt>Frequency</dt><dd>{j.frequency}</dd></div>}
+              {j.license && <div className="row"><dt>Licence</dt><dd>{j.license}</dd></div>}
+              {j.contactEmail && <div className="row"><dt>Contact</dt><dd><a href={`mailto:${j.contactEmail}`}>{j.contactEmail}</a></dd></div>}
             </dl>
           </div>
 
